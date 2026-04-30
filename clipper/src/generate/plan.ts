@@ -13,24 +13,30 @@ export type ContentPlan = {
 
 const THEME_DESCRIPTIONS: Record<ContentTheme, string> = {
   "live-promo":
-    "Hype/promo for the Whatnot live show — drive viewers to come watch a break tonight, reference scarcity/excitement of live pulls.",
+    "Hype/promo for the Whatnot live show — drive viewers to come watch a Pokemon break tonight, reference scarcity/excitement of cracking sealed product live and pulling chase cards in real time.",
   "hobby-tip":
-    "An educational or insightful tip about the trading-card hobby (grading, storage, value, what to look for, common mistakes new collectors make).",
+    "An educational or insightful tip about the Pokemon TCG hobby (grading, storage, set knowledge, vintage vs. modern, pack/box value, what makes a card a chase, common mistakes new collectors make).",
   intro:
-    "Brand intro — who Mystery Hits Factory is, what we do (live breaks, packs, mystery boxes, daily lives), why it's fun to be in the room.",
+    "Brand intro — who Mystery Hits Factory is, what we do (live Pokemon breaks, booster boxes, ETBs, mystery boxes, daily lives), why it's fun to be in the room when packs get ripped.",
   "value-add":
-    "Genuine hobby value: a fact, a take, a perspective that makes the trading-card hobby more interesting to a casual viewer.",
+    "Genuine Pokemon-hobby value: a fact, a take, a perspective on the TCG that makes the hobby more interesting to a casual viewer (e.g., why WOTC era is special, what alt arts are, why sealed product holds value, etc.).",
 };
 
-const SYSTEM_PROMPT = `You write short, scroll-stopping social posts for "Mystery Hits Factory" — a Whatnot reseller doing live sports/trading-card breaks and pack openings.
+const SYSTEM_PROMPT = `You write short, scroll-stopping social posts for "Mystery Hits Factory" — a Whatnot reseller doing live Pokemon TCG breaks and pack/box openings (booster boxes, ETBs, tins, vintage WOTC, modern sets).
 
-Voice: hype but not corny. Knowledgeable. Fun. Like a real card dealer who's also good at TikTok.
-Audience: card collectors, hobbyists, casual sports fans on TikTok / IG / FB.
+Voice: hype but not corny. Knowledgeable about Pokemon TCG (sets, rarities, vintage vs. modern, chase cards). Fun. Like a real Pokemon dealer who's also good at TikTok.
+Audience: Pokemon collectors and TCG fans on TikTok / IG / FB — mix of returning hobbyists, modern openers, and vintage chasers.
 
 CRITICAL IP RULES for the imagePrompt:
-- NO real player names, NO real team logos, NO real brand names (Topps, Panini, Upper Deck, etc.), NO real-looking athlete portraits.
-- Generic trading-card aesthetic only — stacks of unbranded cards, abstract holographic foil patterns, golden card backs, mystery-box vibe, dramatic lighting, premium feel.
-- Always specify a 9:16 vertical portrait composition.
+- NO actual Pokemon characters, names, or silhouettes (no Pikachu, Charizard, Eevee, etc. — even vague references). NO Pokemon logos. NO official-looking Pokemon TCG card layouts. NO Nintendo/Game Freak/Creatures branding.
+- Use ABSTRACT trading-card-collector aesthetics only:
+  * Stacks of unbranded cards (no faces, no names — just card backs or generic holo patterns)
+  * Holographic / rainbow foil textures and gradients
+  * Sealed booster pack shapes (NO Pokemon branding — generic mystery-pack vibe, plain colored foil wrappers)
+  * Closed boxes with question marks or generic "MYSTERY" / "HITS" type wording
+  * Golden card-shaped objects, glowing edges, dramatic studio lighting
+  * Color palette can lean red/yellow/blue (collector vibe) but no Pokeball iconography
+- Always specify 9:16 vertical portrait composition with dramatic lighting.
 
 Output ONLY valid JSON, no prose, no code fence:
 {

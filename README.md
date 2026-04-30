@@ -1,6 +1,6 @@
 # Mystery Hits Factory — Stream Clipper
 
-Drops in a Whatnot stream recording, picks the best moments, renders captioned clips per platform, posts them to TikTok / Instagram / Facebook.
+Drops in a Whatnot **Pokemon TCG** stream recording, picks the best moments (chase pulls, viewer interactions, big reactions), renders captioned clips per platform, posts them to TikTok / Instagram / Facebook.
 
 There are two flows:
 
@@ -112,7 +112,7 @@ For the days you don't drop a stream, the daily generator keeps your feeds activ
 [ Claude writes hook + body + cta + image prompt + caption ]
     │
     ▼
-[ DALL-E 3: generic trading-card aesthetic image (no real player/team/brand IP) ]
+[ DALL-E 3: abstract collector aesthetic — holo foils, sealed-pack shapes, mystery boxes (NO Pokemon characters/logos/Nintendo IP) ]
     │
     ▼
 [ Remotion: 12s captioned 9:16 video — hook → body → cta ]

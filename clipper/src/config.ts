@@ -58,23 +58,23 @@ export function captionFor(platform: Platform, baseCaption: string): string {
       return [
         base,
         ``,
-        `follow @${tiktokHandle()} — live every day on Whatnot 🔴`,
+        `follow @${tiktokHandle()} — live Pokemon breaks every day on Whatnot 🔴`,
         ``,
-        `#whatnot #sportscards #cardbreaks #cardcollector #thehobby #pull #foryou #fyp`,
+        `#pokemon #pokemoncards #pokemontcg #pokemoncommunity #pokemonbreaks #poketuber #pull #whatnot #foryou #fyp`,
       ].join("\n");
     case "instagram":
       return [
         base,
         ``,
-        `Catch the live show on Whatnot — @${whatnotHandle()}`,
+        `Catch the live Pokemon breaks on Whatnot — @${whatnotHandle()}`,
         ``,
-        `#whatnot #sportscards #cardbreaks #boxbreak #cardcollector #thehobby #sportscardsforsale #cardsoftiktok`,
+        `#pokemon #pokemontcg #pokemoncards #pokemoncommunity #boosterbox #etb #poketuber #pokemoncardsforsale #pokemoncollector #thehobby #whatnot`,
       ].join("\n");
     case "facebook":
       return [
         base,
         ``,
-        `${facebookPage()} — live every day on Whatnot. Search "${whatnotHandle()}" on Whatnot to join.`,
+        `${facebookPage()} — live Pokemon TCG breaks every day on Whatnot. Search "${whatnotHandle()}" on Whatnot to join.`,
       ].join("\n");
   }
 }
