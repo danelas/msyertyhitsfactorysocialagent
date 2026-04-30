@@ -2,7 +2,12 @@
 
 Drops in a Whatnot stream recording, picks the best moments, renders captioned clips per platform, posts them to TikTok / Instagram / Facebook.
 
-## How it works
+There are two flows:
+
+- **Local clip flow** — you drop a Whatnot stream into `input/`, the agent finds the best moments and posts clips. Manual, on-demand.
+- **Daily generator flow** — when no fresh stream exists, an AI picks a content theme (live promo / hobby tip / brand intro / value-add) and produces a 12-second captioned video. Runs unattended on a daily cron via GitHub Actions.
+
+## How the clip flow works
 
 ```
 input/stream.mp4
@@ -96,15 +101,66 @@ clipper/work/
     moments.json         # what Claude picked
 ```
 
+## Daily generator flow
+
+For the days you don't drop a stream, the daily generator keeps your feeds active.
+
+```
+[ Claude picks theme based on day-of-week rotation ]
+    │   live-promo / hobby-tip / live-promo / value-add / live-promo / hobby-tip / intro
+    ▼
+[ Claude writes hook + body + cta + image prompt + caption ]
+    │
+    ▼
+[ DALL-E 3: generic trading-card aesthetic image (no real player/team/brand IP) ]
+    │
+    ▼
+[ Remotion: 12s captioned 9:16 video — hook → body → cta ]
+    │
+    ▼
+[ Upload-Post: same video to TikTok / IG / FB with platform-specific captions ]
+```
+
+Run locally:
+```
+cd clipper
+npm run daily:dry   # generate + render, no post
+npm run daily       # full run with posts
+```
+
+### Scheduled deployment (GitHub Actions)
+
+The `.github/workflows/mhf-daily.yml` workflow runs the daily generator every day at 17:00 UTC (1 PM ET).
+
+To activate it:
+
+1. Create a GitHub repo (private is fine) and push:
+   ```
+   gh repo create mystery-hits-factory --private --source=. --push
+   ```
+   (or `git remote add origin ...; git push -u origin main`)
+
+2. Add 4 repository secrets at `Settings → Secrets and variables → Actions`:
+   - `ANTHROPIC_API_KEY`
+   - `OPENAI_API_KEY`
+   - `UPLOAD_POST_API_KEY`
+   - `UPLOAD_POST_USER` — the Upload-Post profile that has Mystery Hits Factory's TikTok / IG / FB connected
+
+3. The schedule fires automatically. To test before waiting for tomorrow, go to `Actions → MHF Daily Post → Run workflow`, optionally with `dry_run: true`.
+
 ## Tuning
 
 If a clip comes out wrong, the fix is usually one of:
 
-- **Wrong moment picked** → edit the `SYSTEM_PROMPT` in `clipper/src/detect/rank.ts`
+- **Wrong moment picked** → edit `SYSTEM_PROMPT` in `clipper/src/detect/rank.ts`
 - **Hook text feels off** → edit how `hookPhrase` is generated (also in `rank.ts`)
 - **End card / caption tone wrong on one platform** → edit `clipper/src/config.ts`
 - **Captions too small / wrong position** → edit `remotion/src/StreamClip.tsx`
 - **Want more or fewer clips per stream** → `SETTINGS.momentsPerStream` in `clipper/src/config.ts`
+- **Daily promo content feels generic / off-voice** → edit `SYSTEM_PROMPT` in `clipper/src/generate/plan.ts`
+- **Daily theme rotation wrong (too much promo / not enough)** → edit `pickThemeForDay` in `clipper/src/generate/plan.ts`
+- **Daily video styling** → edit `remotion/src/PromoCard.tsx`
+- **AI image looks wrong** → tighten the imagePrompt rules in `SYSTEM_PROMPT` in `plan.ts`
 
 ## Limits
 

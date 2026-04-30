@@ -1,5 +1,3 @@
-import type { Moment } from "./detect/rank.ts";
-
 export type Platform = "tiktok" | "instagram" | "facebook";
 
 export const SETTINGS = {
@@ -53,8 +51,8 @@ export function styleFor(platform: Platform): PlatformStyle {
   }
 }
 
-export function captionFor(platform: Platform, moment: Moment): string {
-  const base = moment.caption.trim();
+export function captionFor(platform: Platform, baseCaption: string): string {
+  const base = baseCaption.trim();
   switch (platform) {
     case "tiktok":
       return [

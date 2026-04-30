@@ -1,0 +1,90 @@
+name: MHF Daily Post
+
+on:
+  schedule:
+    # 17:00 UTC = 1 PM ET / 10 AM PT — fires once per day before peak evening hobby viewing.
+    - cron: "0 17 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run (render only, no post)"
+        required: false
+        default: "false"
+        type: choice
+        options: ["true", "false"]
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: clipper
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: clipper/package-lock.json
+
+      - name: Install ffmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Install clipper deps
+        run: npm ci
+
+      - name: Install remotion deps
+        working-directory: remotion
+        run: npm ci
+
+      - name: Install Chromium for Remotion
+        working-directory: remotion
+        run: npx remotion browser ensure
+
+      - name: Check secrets are present
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          UPLOAD_POST_API_KEY: ${{ secrets.UPLOAD_POST_API_KEY }}
+          UPLOAD_POST_USER: ${{ secrets.UPLOAD_POST_USER }}
+        run: |
+          missing=0
+          for v in ANTHROPIC_API_KEY OPENAI_API_KEY UPLOAD_POST_API_KEY UPLOAD_POST_USER; do
+            val="${!v}"
+            if [ -z "$val" ]; then
+              echo "::error::Secret $v is EMPTY or not set"
+              missing=1
+            else
+              echo "OK: $v is present (length=${#val})"
+            fi
+          done
+          [ "$missing" = "0" ] || exit 1
+
+      - name: Run daily generator
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          UPLOAD_POST_API_KEY: ${{ secrets.UPLOAD_POST_API_KEY }}
+          UPLOAD_POST_USER: ${{ secrets.UPLOAD_POST_USER }}
+          WHATNOT_HANDLE: mysteryhitsfactory
+          TIKTOK_HANDLE: mystery.hits.factory
+          INSTAGRAM_HANDLE: mystery.hits.factory
+          FACEBOOK_PAGE: Mystery Hits Factory
+          DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+        run: |
+          if [ "$DRY_RUN" = "true" ]; then
+            npm run daily:dry
+          else
+            npm run daily
+          fi
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: daily-${{ github.run_id }}
+          path: clipper/work/
+          retention-days: 7

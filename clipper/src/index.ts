@@ -111,7 +111,7 @@ async function main() {
         console.log(`[clip]   dry-run — skipping post`);
         continue;
       }
-      const caption = captionFor(platform, moment);
+      const caption = captionFor(platform, moment.caption);
       const result = await postVideo({
         caption,
         title: `${moment.hookPhrase} — Mystery Hits Factory`,

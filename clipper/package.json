@@ -6,6 +6,8 @@
   "scripts": {
     "clip": "tsx src/index.ts",
     "clip:dry": "tsx src/index.ts --dry-run",
+    "daily": "tsx src/daily.ts",
+    "daily:dry": "tsx src/daily.ts --dry-run",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
