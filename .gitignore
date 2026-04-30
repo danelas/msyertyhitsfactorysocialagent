@@ -1,0 +1,23 @@
+node_modules/
+.env
+.env.local
+
+# generated artifacts
+output/
+clipper/work/
+remotion/public/*.mp4
+remotion/public/*.mov
+remotion/public/*.webm
+!remotion/public/.gitkeep
+
+# user-dropped source videos — never commit raw streams
+input/*.mp4
+input/*.mov
+input/*.mkv
+input/*.webm
+!input/.gitkeep
+
+# logs / OS junk
+*.log
+.DS_Store
+Thumbs.db
