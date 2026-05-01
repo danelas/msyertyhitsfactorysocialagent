@@ -112,7 +112,7 @@ For the days you don't drop a stream, the daily generator keeps your feeds activ
 [ Claude writes hook + body + cta + image prompt + caption ]
     │
     ▼
-[ DALL-E 3: abstract collector aesthetic — holo foils, sealed-pack shapes, mystery boxes (NO Pokemon characters/logos/Nintendo IP) ]
+[ Background: pick from stock/ if you've uploaded photos, else AI-generated abstract studio bg ]
     │
     ▼
 [ Remotion: 12s captioned 9:16 video — hook → body → cta ]
@@ -127,6 +127,26 @@ cd clipper
 npm run daily:dry   # generate + render, no post
 npm run daily       # full run with posts
 ```
+
+### Background photos — `stock/`
+
+The daily generator prefers your own uploaded photos as backgrounds. **Drop any photos you want to use into `stock/`** at the repo root:
+
+```
+stock/
+  sealed-elite-trainer-box.jpg
+  graded-slabs-shelf.jpg
+  studio-shot-cards-fanned.jpg
+  ...
+```
+
+Use real photos of product or cards you actually own — they're 100% IP-clean (you own the physical thing) and convert harder than any AI graphic.
+
+- Supported: `.jpg`, `.jpeg`, `.png`, `.webp`
+- Vertical 9:16 photos look best; non-9:16 photos will be center-cropped
+- The generator picks one at random per run, so the more you upload the more variety you'll get
+- Photos in `stock/` are committed to git so the cloud cron can use them — keep file sizes reasonable (under ~3MB each is fine)
+- If `stock/` is empty, the generator falls back to an AI-generated abstract studio background (no Pokemon-evocative imagery — locked at the prompt level)
 
 ### Scheduled deployment (GitHub Actions)
 

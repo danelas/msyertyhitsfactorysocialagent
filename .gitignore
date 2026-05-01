@@ -2,13 +2,20 @@ node_modules/
 .env
 .env.local
 
-# generated artifacts
+# generated artifacts — public/ is a staging area, the source-of-truth lives in stock/ or input/
 output/
 clipper/work/
 remotion/public/*.mp4
 remotion/public/*.mov
 remotion/public/*.webm
+remotion/public/*.png
+remotion/public/*.jpg
+remotion/public/*.jpeg
+remotion/public/*.webp
 !remotion/public/.gitkeep
+
+# stock/ photos — DO commit these so cloud cron can use them.
+# (no rule needed; this comment is just to make the intent explicit.)
 
 # user-dropped source videos — never commit raw streams
 input/*.mp4
