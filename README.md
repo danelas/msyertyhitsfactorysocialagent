@@ -103,23 +103,49 @@ clipper/work/
 
 ## Daily generator flow
 
-For the days you don't drop a stream, the daily generator keeps your feeds active.
+For the days you don't drop a stream, the daily generator keeps your feeds active and pulls live content from mysteryhitsfactory.com.
 
 ```
-[ Claude picks theme based on day-of-week rotation ]
-    │   live-promo / hobby-tip / live-promo / value-add / live-promo / hobby-tip / intro
-    ▼
-[ Claude writes hook + body + cta + image prompt + caption ]
+[ Scrape mysteryhitsfactory.com → active drops, featured products, sealed singles, themed packs, giveaway state ]
     │
     ▼
-[ Background: pick from stock/ if you've uploaded photos, else AI-generated abstract studio bg ]
+[ Pick theme — site-driven if available, else evergreen rotation ]
+    │   live-drop-urgency / tier-spotlight / new-arrival / giveaway-hype
+    │   (fallback) live-promo / hobby-tip / intro / value-add
+    ▼
+[ Claude writes hook + body + cta + caption — referencing the SPECIFIC drop / product / price / end-time from the site ]
+    │
+    ▼
+[ Background: site product image → user stock/ photo → AI abstract bg (in that priority) ]
     │
     ▼
 [ Remotion: 12s captioned 9:16 video — hook → body → cta ]
     │
     ▼
-[ Upload-Post: same video to TikTok / IG / FB with platform-specific captions ]
+[ Upload-Post: same video to TikTok / IG / FB; caption includes the specific product URL ]
 ```
+
+### Site-driven themes
+
+When the scraper finds something live on mysteryhitsfactory.com, the planner picks the matching theme:
+
+| Site signal | Theme | Example hook |
+|---|---|---|
+| Active live drop with end-time | `live-drop-urgency` | "VAULT #14 ENDS TONIGHT" |
+| Themed pack / featured bundle | `new-arrival` | "MEW PACK JUST DROPPED" |
+| Sealed singles in stock (named set) | `new-arrival` | "CROWN ZENITH SINGLES IN" |
+| SpinFREE / giveaway active | `giveaway-hype` | "FREE SPIN — TODAY ONLY" |
+| Nothing time-sensitive | `tier-spotlight` | "WHAT'S IN A VAULT PACK?" |
+
+If the scraper fails or returns nothing usable, the daily generator falls back to evergreen themes (live-promo, hobby-tip, intro, value-add) so it still ships content.
+
+### Background image priority
+
+For each daily run the generator picks a background in this order:
+
+1. **Site product image** — when the chosen post is anchored on a specific drop/product and the site exposes an image URL, the generator downloads it and uses it as the background. (First-sale-clean since you sell the products on the site.)
+2. **Your stock photos** — anything in `stock/` at the repo root.
+3. **AI abstract background** — DALL-E 3 fallback, locked to studio backgrounds with no Pokemon-evocative imagery.
 
 Run locally:
 ```
@@ -181,6 +207,9 @@ If a clip comes out wrong, the fix is usually one of:
 - **Daily theme rotation wrong (too much promo / not enough)** → edit `pickThemeForDay` in `clipper/src/generate/plan.ts`
 - **Daily video styling** → edit `remotion/src/PromoCard.tsx`
 - **AI image looks wrong** → tighten the imagePrompt rules in `SYSTEM_PROMPT` in `plan.ts`
+- **Scraper missing products / picking wrong anchor** → edit `SCRAPER_SYSTEM_PROMPT` or `pickAnchorProduct` in `clipper/src/site/scrape.ts`
+- **Wrong product URL in caption** → check `plan.url` (set from `anchorProduct.url` in `generate/index.ts`)
+- **Site product image not loading / wrong format** → check `clipper/src/site/fetch-image.ts` (currently accepts JPG/PNG/WebP)
 
 ## Limits
 

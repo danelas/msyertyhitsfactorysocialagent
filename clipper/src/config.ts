@@ -51,13 +51,26 @@ export function styleFor(platform: Platform): PlatformStyle {
   }
 }
 
-export function captionFor(platform: Platform, baseCaption: string): string {
+/**
+ * Build the per-platform caption.
+ *
+ * @param url Optional product URL — if provided, gets dropped in front of the
+ *   show CTA so the post links to a specific drop / product. If omitted,
+ *   captions just point to the brand handle / store generally.
+ */
+export function captionFor(
+  platform: Platform,
+  baseCaption: string,
+  url?: string
+): string {
   const base = baseCaption.trim();
+  const link = url ?? "mysteryhitsfactory.com";
   switch (platform) {
     case "tiktok":
       return [
         base,
         ``,
+        `🔗 ${link}`,
         `follow @${tiktokHandle()} — live Pokemon breaks every day on Whatnot 🔴`,
         ``,
         `#pokemon #pokemoncards #pokemontcg #pokemoncommunity #pokemonbreaks #poketuber #pull #whatnot #foryou #fyp`,
@@ -66,6 +79,7 @@ export function captionFor(platform: Platform, baseCaption: string): string {
       return [
         base,
         ``,
+        `🔗 ${link}`,
         `Catch the live Pokemon breaks on Whatnot — @${whatnotHandle()}`,
         ``,
         `#pokemon #pokemontcg #pokemoncards #pokemoncommunity #boosterbox #etb #poketuber #pokemoncardsforsale #pokemoncollector #thehobby #whatnot`,
@@ -74,6 +88,7 @@ export function captionFor(platform: Platform, baseCaption: string): string {
       return [
         base,
         ``,
+        `Shop or join the next drop: ${link}`,
         `${facebookPage()} — live Pokemon TCG breaks every day on Whatnot. Search "${whatnotHandle()}" on Whatnot to join.`,
       ].join("\n");
   }

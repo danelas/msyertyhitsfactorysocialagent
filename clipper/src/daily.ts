@@ -26,7 +26,7 @@ async function main() {
 
   for (const platform of PLATFORMS) {
     console.log(`[daily] posting to ${platform}`);
-    const caption = captionFor(platform, plan.caption);
+    const caption = captionFor(platform, plan.caption, plan.url);
     const result = await postVideo({
       caption,
       title: `${plan.hook} — Mystery Hits Factory`,
