@@ -8,6 +8,7 @@
     "clip:dry": "tsx src/index.ts --dry-run",
     "daily": "tsx src/daily.ts",
     "daily:dry": "tsx src/daily.ts --dry-run",
+    "scrape": "tsx src/scrape-debug.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
