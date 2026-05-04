@@ -134,41 +134,73 @@ export async function planContent(
 }
 
 /**
- * Pick today's theme. If site context offers a hook (active drop, themed pack,
- * giveaway, fresh inventory) we lean into it; otherwise we cycle through
- * generic themes by day-of-year.
+ * Build the rotation pool for a given day, mixing site-driven themes (only when
+ * the site actually has backing data) with evergreen fallbacks. Each viable
+ * theme appears once — no consecutive duplicates — so consecutive days cycle
+ * through different content angles.
+ */
+function buildThemeRotation(siteContext: SiteContext | null): ContentTheme[] {
+  const rotation: ContentTheme[] = [];
+  if (siteContext?.activeDrops.length) rotation.push("live-drop-urgency");
+  if (siteContext?.themedPacks.length || siteContext?.recentInventory.length) {
+    rotation.push("new-arrival");
+  }
+  if (siteContext?.hasGiveaway) rotation.push("giveaway-hype");
+  // Always-viable themes
+  rotation.push("tier-spotlight");
+  rotation.push("live-promo");
+  rotation.push("hobby-tip");
+  rotation.push("value-add");
+  rotation.push("intro");
+  return rotation;
+}
+
+/**
+ * Pick today's theme. Rotates through every viable angle so consecutive days
+ * never get the same theme even when the site state is stable.
  */
 export function pickThemeForDay(
   siteContext: SiteContext | null,
   date: Date = new Date()
 ): ContentTheme {
+  const rotation = buildThemeRotation(siteContext);
   const dayIndex = Math.floor(date.getTime() / 86400000);
-
-  // Site-driven themes win when available — they're more specific and convert better.
-  if (siteContext) {
-    if (siteContext.activeDrops.length > 0) return "live-drop-urgency";
-    // Rotate the secondary site themes so we don't post the same thing every day
-    const siteRotation: ContentTheme[] = [];
-    if (siteContext.themedPacks.length > 0) siteRotation.push("new-arrival");
-    if (siteContext.recentInventory.length > 0) siteRotation.push("new-arrival");
-    if (siteContext.hasGiveaway) siteRotation.push("giveaway-hype");
-    siteRotation.push("tier-spotlight");
-    if (siteRotation.length > 0) {
-      const i = ((dayIndex % siteRotation.length) + siteRotation.length) % siteRotation.length;
-      return siteRotation[i];
-    }
-  }
-
-  // No site signal — fall back to evergreen rotation.
-  const rotation: ContentTheme[] = [
-    "live-promo",
-    "hobby-tip",
-    "live-promo",
-    "value-add",
-    "live-promo",
-    "hobby-tip",
-    "intro",
-  ];
   const i = ((dayIndex % rotation.length) + rotation.length) % rotation.length;
   return rotation[i];
+}
+
+/**
+ * Pick the anchor product for today's chosen theme. Themes that aren't
+ * product-specific (tier-spotlight, evergreen) return null. For product
+ * themes, rotates within the available list by day so a day-2 post doesn't
+ * land on the same drop as day-1.
+ */
+export function pickAnchorForTheme(
+  theme: ContentTheme,
+  siteContext: SiteContext | null,
+  date: Date = new Date()
+): SiteProduct | null {
+  if (!siteContext) return null;
+  const dayIndex = Math.floor(date.getTime() / 86400000);
+
+  let sources: SiteProduct[][];
+  switch (theme) {
+    case "live-drop-urgency":
+      sources = [siteContext.activeDrops];
+      break;
+    case "new-arrival":
+      sources = [siteContext.themedPacks, siteContext.recentInventory];
+      break;
+    default:
+      // tier-spotlight, giveaway-hype, live-promo, hobby-tip, value-add, intro
+      // — these aren't anchored on a specific product
+      return null;
+  }
+
+  for (const source of sources) {
+    if (source.length > 0) {
+      return source[((dayIndex % source.length) + source.length) % source.length];
+    }
+  }
+  return null;
 }

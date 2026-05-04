@@ -2,10 +2,10 @@ import { spawn } from "node:child_process";
 import { copyFile, mkdir, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
-import { pickThemeForDay, planContent, type ContentPlan } from "./plan.ts";
+import { pickThemeForDay, pickAnchorForTheme, planContent, type ContentPlan } from "./plan.ts";
 import { generateImage } from "./image.ts";
 import { pickAndStageStockPhoto } from "./stock.ts";
-import { scrapeSiteSafely, pickAnchorProduct } from "../site/scrape.ts";
+import { scrapeSiteSafely } from "../site/scrape.ts";
 import { downloadProductImage, imageExtFromUrl } from "../site/fetch-image.ts";
 
 const REMOTION_DIR = resolve(process.cwd(), "../remotion");
@@ -41,8 +41,8 @@ export async function generatePromoVideo(
   await mkdir(REMOTION_PUBLIC, { recursive: true });
 
   const siteContext = await scrapeSiteSafely();
-  const anchorProduct = siteContext ? pickAnchorProduct(siteContext) : null;
   const theme = pickThemeForDay(siteContext);
+  const anchorProduct = pickAnchorForTheme(theme, siteContext);
   console.log(`[generate] theme: ${theme}`);
   if (anchorProduct) {
     console.log(`[generate] anchor: ${anchorProduct.name} (${anchorProduct.url})`);

@@ -102,11 +102,3 @@ export async function scrapeSiteSafely(): Promise<SiteContext | null> {
   }
 }
 
-/** Pick the product to anchor today's post around, or null if none qualifies. */
-export function pickAnchorProduct(ctx: SiteContext): SiteProduct | null {
-  if (ctx.activeDrops.length > 0) return ctx.activeDrops[0];
-  if (ctx.themedPacks.length > 0) return ctx.themedPacks[0];
-  if (ctx.featuredProducts.length > 0) return ctx.featuredProducts[0];
-  if (ctx.recentInventory.length > 0) return ctx.recentInventory[0];
-  return null;
-}
