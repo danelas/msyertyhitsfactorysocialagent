@@ -48,11 +48,13 @@ export const StreamClip: React.FC<StreamClipProps> = ({
   const frame = useCurrentFrame();
   const { durationInFrames, fps } = useVideoConfig();
 
-  const fadeFrames = Math.round(0.4 * fps);
+  // No fade-in — video is visible from frame 0. Tiny fade-out so the cut
+  // to a feed/end-card next isn't a hard pop.
+  const fadeOutFrames = Math.round(0.25 * fps);
   const fadeOpacity = interpolate(
     frame,
-    [0, fadeFrames, durationInFrames - fadeFrames, durationInFrames],
-    [0, 1, 1, 0],
+    [0, durationInFrames - fadeOutFrames, durationInFrames],
+    [1, 1, 0],
     { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
   );
 
@@ -125,18 +127,13 @@ function groupWords(words: Word[]): { text: string; start: number; end: number }
 const HookOverlay: React.FC<{ text: string; brandColor: string }> = ({ text, brandColor }) => {
   const frame = useCurrentFrame();
   const { fps, durationInFrames } = useVideoConfig();
-  const inFrames = Math.round(0.2 * fps);
-  const outFrames = Math.round(0.25 * fps);
+  // No fade-in — hook is visible from the very first frame. Quick fade-out so
+  // it doesn't pop off when the captions take over.
+  const outFrames = Math.round(0.2 * fps);
   const opacity = interpolate(
     frame,
-    [0, inFrames, durationInFrames - outFrames, durationInFrames],
-    [0, 1, 1, 0],
-    { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
-  );
-  const scale = interpolate(
-    frame,
-    [0, inFrames],
-    [0.85, 1],
+    [0, durationInFrames - outFrames, durationInFrames],
+    [1, 1, 0],
     { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
   );
   return (
@@ -155,7 +152,6 @@ const HookOverlay: React.FC<{ text: string; brandColor: string }> = ({ text, bra
           textTransform: "uppercase",
           letterSpacing: 2,
           boxShadow: "0 10px 0 rgba(0,0,0,0.7)",
-          transform: `scale(${scale})`,
           textAlign: "center",
           maxWidth: 900,
           lineHeight: 1.05,

@@ -50,7 +50,7 @@ export const PromoCard: React.FC<PromoCardProps> = ({
           style={{ width: "100%", height: "100%", objectFit: "cover" }}
         />
       </AbsoluteFill>
-      <AbsoluteFill style={{ backgroundColor: "rgba(0,0,0,0.42)" }} />
+      <AbsoluteFill style={{ backgroundColor: "rgba(0,0,0,0.22)" }} />
 
       <Sequence from={0} durationInFrames={hookFrames}>
         <BigText text={hook} brandColor={brandColor} position="top" />
@@ -74,18 +74,16 @@ const BigText: React.FC<{ text: string; brandColor: string; position: "top" | "b
 }) => {
   const frame = useCurrentFrame();
   const { fps, durationInFrames } = useVideoConfig();
-  const inFrames = Math.round(0.25 * fps);
-  const outFrames = Math.round(0.25 * fps);
+  // Hold solid for the first N frames, then fade out at the very end so the
+  // handoff to the next text block isn't a hard pop. No fade-in — the text
+  // is visible from the very first frame of its sequence.
+  const outFrames = Math.round(0.2 * fps);
   const opacity = interpolate(
     frame,
-    [0, inFrames, durationInFrames - outFrames, durationInFrames],
-    [0, 1, 1, 0],
+    [0, durationInFrames - outFrames, durationInFrames],
+    [1, 1, 0],
     { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
   );
-  const scale = interpolate(frame, [0, inFrames], [0.85, 1], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-  });
   return (
     <AbsoluteFill
       style={{
@@ -108,7 +106,6 @@ const BigText: React.FC<{ text: string; brandColor: string; position: "top" | "b
           letterSpacing: 2,
           boxShadow: "0 12px 0 rgba(0,0,0,0.7)",
           textAlign: "center",
-          transform: `scale(${scale})`,
           lineHeight: 1.05,
           maxWidth: 920,
         }}
@@ -122,12 +119,11 @@ const BigText: React.FC<{ text: string; brandColor: string; position: "top" | "b
 const BodyText: React.FC<{ text: string }> = ({ text }) => {
   const frame = useCurrentFrame();
   const { fps, durationInFrames } = useVideoConfig();
-  const inFrames = Math.round(0.3 * fps);
-  const outFrames = Math.round(0.3 * fps);
+  const outFrames = Math.round(0.2 * fps);
   const opacity = interpolate(
     frame,
-    [0, inFrames, durationInFrames - outFrames, durationInFrames],
-    [0, 1, 1, 0],
+    [0, durationInFrames - outFrames, durationInFrames],
+    [1, 1, 0],
     { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
   );
   return (
