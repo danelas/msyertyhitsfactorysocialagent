@@ -71,6 +71,7 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           UPLOAD_POST_API_KEY: ${{ secrets.UPLOAD_POST_API_KEY }}
           UPLOAD_POST_USER: ${{ secrets.UPLOAD_POST_USER }}
+          FACEBOOK_PAGE_ID: ${{ secrets.FACEBOOK_PAGE_ID }}
           WHATNOT_HANDLE: mysteryhitsfactory
           TIKTOK_HANDLE: mystery.hits.factory
           INSTAGRAM_HANDLE: mystery.hits.factory

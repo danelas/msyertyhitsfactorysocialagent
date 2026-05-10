@@ -44,6 +44,23 @@ export async function postVideo(input: PostInput): Promise<unknown> {
   form.append("title", input.title ?? input.caption.slice(0, 90));
   form.append("description", input.caption);
 
+  // Explicit FB Page routing. Without this, Upload-Post auto-routes to
+  // whichever Page is OAuth-granted to the profile — and the FB user behind
+  // this account also manages other Pages (Bloom Roster, Gold Touch List), so
+  // a stale OAuth grant can silently land posts on the wrong Page.
+  if (input.platforms.includes("facebook")) {
+    const pageId = process.env.FACEBOOK_PAGE_ID;
+    if (!pageId) {
+      throw new Error(
+        "FACEBOOK_PAGE_ID not set — required when posting to Facebook to prevent misrouted posts. " +
+          "Get the ID from https://api.upload-post.com/api/uploadposts/facebook/pages?profile=" +
+          encodeURIComponent(userProfile()) +
+          " (or FB Page → About → Page transparency → Page ID)."
+      );
+    }
+    form.append("facebook_page_id", pageId);
+  }
+
   const resp = await fetch(`${API_BASE}/upload`, {
     method: "POST",
     headers: authHeader(),
