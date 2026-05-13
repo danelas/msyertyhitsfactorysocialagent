@@ -10,13 +10,15 @@ export async function generateImage(
   if (!apiKey) throw new Error("OPENAI_API_KEY not set");
   const client = new OpenAI({ apiKey });
 
+  const mappedSize: "1024x1024" | "1024x1536" | "1536x1024" =
+    size === "1024x1792" ? "1024x1536" : size === "1792x1024" ? "1536x1024" : "1024x1024";
+
   console.log(`[image] generating: ${prompt.slice(0, 100)}...`);
   const result = await client.images.generate({
-    model: "dall-e-3",
+    model: "gpt-image-1",
     prompt,
-    size,
-    quality: "standard",
-    response_format: "b64_json",
+    size: mappedSize,
+    quality: "medium",
     n: 1,
   });
   const b64 = result.data?.[0]?.b64_json;
