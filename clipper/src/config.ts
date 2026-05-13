@@ -37,15 +37,15 @@ export function styleFor(platform: Platform): PlatformStyle {
     case "instagram":
       return {
         platform,
-        endCardLine1: "live on Whatnot",
-        endCardLine2: `@${whatnotHandle()}`,
+        endCardLine1: `@${instagramHandle()}`,
+        endCardLine2: "mysteryhitsfactory.com",
         brandColor: "#FFD700",
       };
     case "facebook":
       return {
         platform,
         endCardLine1: facebookPage(),
-        endCardLine2: "live every day on Whatnot",
+        endCardLine2: "mysteryhitsfactory.com",
         brandColor: "#FFD700",
       };
   }
@@ -71,25 +71,25 @@ export function captionFor(
         base,
         ``,
         `🔗 ${link}`,
-        `follow @${tiktokHandle()} — live Pokemon breaks every day on Whatnot 🔴`,
+        `follow @${tiktokHandle()} for daily Pokemon hits`,
         ``,
-        `#pokemon #pokemoncards #pokemontcg #pokemoncommunity #pokemonbreaks #poketuber #pull #whatnot #foryou #fyp`,
+        `#pokemon #pokemoncards #pokemontcg #pokemoncommunity #pokemonbreaks #mysterypack #poketuber #pull #foryou #fyp`,
       ].join("\n");
     case "instagram":
       return [
         base,
         ``,
         `🔗 ${link}`,
-        `Catch the live Pokemon breaks on Whatnot — @${whatnotHandle()}`,
+        `Mystery Pokemon packs at mysteryhitsfactory.com`,
         ``,
-        `#pokemon #pokemontcg #pokemoncards #pokemoncommunity #boosterbox #etb #poketuber #pokemoncardsforsale #pokemoncollector #thehobby #whatnot`,
+        `#pokemon #pokemontcg #pokemoncards #pokemoncommunity #boosterbox #etb #mysterypack #poketuber #pokemoncardsforsale #pokemoncollector #thehobby`,
       ].join("\n");
     case "facebook":
       return [
         base,
         ``,
-        `Shop or join the next drop: ${link}`,
-        `${facebookPage()} — live Pokemon TCG breaks every day on Whatnot. Search "${whatnotHandle()}" on Whatnot to join.`,
+        `Shop the next drop: ${link}`,
+        `${facebookPage()} — mystery Pokemon packs, sealed singles, and themed bundles at mysteryhitsfactory.com.`,
       ].join("\n");
   }
 }

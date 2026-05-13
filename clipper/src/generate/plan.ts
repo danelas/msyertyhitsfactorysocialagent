@@ -6,7 +6,7 @@ export type ContentTheme =
   | "tier-spotlight"
   | "new-arrival"
   | "giveaway-hype"
-  | "live-promo"
+  | "seller-supply"
   | "hobby-tip"
   | "intro"
   | "value-add";
@@ -31,25 +31,28 @@ const THEME_DESCRIPTIONS: Record<ContentTheme, string> = {
     "Inventory news — a specific sealed Pokemon set just landed (Crown Zenith, Silver Tempest, Stellar Crown, etc.). Treat it like a bulletin: limited stock, get them now.",
   "giveaway-hype":
     "Drive engagement to the SpinFREE / giveaway feature on the site. Free entry framing, FOMO-friendly, low-friction CTA.",
-  "live-promo":
-    "Hype/promo for the Whatnot live show — drive viewers to come watch a Pokemon break tonight, reference scarcity/excitement of cracking sealed product live and pulling chase cards in real time.",
+  "seller-supply":
+    "Pitch to Whatnot sellers, break-show hosts, and other Pokemon resellers — our mystery packs are built to be cracked on stream. Reference guaranteed minimums, hit ratios, and how a stocked tier lineup makes for great live content. Speak peer-to-peer to other sellers, not as a competing seller.",
   "hobby-tip":
     "An educational or insightful tip about the Pokemon TCG hobby (grading, storage, set knowledge, vintage vs. modern, pack/box value, what makes a card a chase, common mistakes new collectors make).",
   intro:
-    "Brand intro — who Mystery Hits Factory is, what we do (live Pokemon breaks, mystery packs across six tiers, sealed singles, themed bundles), why it's fun.",
+    "Brand intro — who Mystery Hits Factory is, what we do (mystery Pokemon packs across six tiers, sealed singles, themed bundles, drops on mysteryhitsfactory.com), why it's fun.",
   "value-add":
     "Genuine Pokemon-hobby value: a fact, a take, a perspective on the TCG that makes the hobby more interesting to a casual viewer (e.g., why WOTC era is special, what alt arts are, why sealed product holds value, etc.).",
 };
 
-const SYSTEM_PROMPT = `You write short, scroll-stopping social posts for "Mystery Hits Factory" — a Whatnot Pokemon TCG reseller and a website (mysteryhitsfactory.com) that sells:
+const SYSTEM_PROMPT = `You write short, scroll-stopping social posts for "Mystery Hits Factory" — a Pokemon TCG mystery-pack maker and website (mysteryhitsfactory.com) that sells:
 - Six-tier mystery packs: Standard ($9.99), Premium, Deluxe, Graded, Elite, Vault ($249, guaranteed minimum value)
 - Time-limited Live Drops (e.g. Vault Drop #14, Mew Drop #2)
 - Sealed singles in named sets (Crown Zenith, Silver Tempest, Stellar Crown, etc.)
 - Themed packs and bundles (Mew Pack, Triple Hit Bundle)
 - A SpinFREE / giveaway feature
-- Daily Whatnot live breaks
 
-Voice: hype but not corny. Knowledgeable about Pokemon TCG (sets, rarities, vintage vs. modern, chase cards). Fun. Like a real Pokemon dealer who's also good at TikTok.
+NEVER frame Mystery Hits Factory as a Whatnot seller, a live breaker, a Whatnot host, or as running live breaks. We do NOT sell on Whatnot. No "watch our live", no "join our break", no "live every day on Whatnot", no @-handle for a Whatnot show.
+
+The primary audience is Pokemon collectors. Mystery Hits Factory packs are ALSO stocked by Whatnot sellers / break-show hosts who source crack-ready inventory — but that's only one ad angle and only relevant when the theme explicitly calls for it (theme: "seller-supply"). For every other theme, write to collectors directly and do NOT mention Whatnot sellers or break shops.
+
+Voice: hype but not corny. Knowledgeable about Pokemon TCG (sets, rarities, vintage vs. modern, chase cards). Fun. Like a real Pokemon pack maker who's also good at TikTok.
 Audience: Pokemon collectors and TCG fans on TikTok / IG / FB — mix of returning hobbyists, modern openers, and vintage chasers.
 
 CRITICAL IP RULES for the imagePrompt (used as a fallback when the post has no specific product image):
@@ -148,7 +151,7 @@ function buildThemeRotation(siteContext: SiteContext | null): ContentTheme[] {
   if (siteContext?.hasGiveaway) rotation.push("giveaway-hype");
   // Always-viable themes
   rotation.push("tier-spotlight");
-  rotation.push("live-promo");
+  rotation.push("seller-supply");
   rotation.push("hobby-tip");
   rotation.push("value-add");
   rotation.push("intro");
@@ -192,7 +195,7 @@ export function pickAnchorForTheme(
       sources = [siteContext.themedPacks, siteContext.recentInventory];
       break;
     default:
-      // tier-spotlight, giveaway-hype, live-promo, hobby-tip, value-add, intro
+      // tier-spotlight, giveaway-hype, seller-supply, hobby-tip, value-add, intro
       // — these aren't anchored on a specific product
       return null;
   }
