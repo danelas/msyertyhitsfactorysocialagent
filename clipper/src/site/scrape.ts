@@ -20,11 +20,27 @@ export type SiteContext = {
   featuredProducts: SiteProduct[]; // anything featured on the homepage
   recentInventory: SiteProduct[];  // sealed singles in stock (named sets)
   themedPacks: SiteProduct[];      // themed bundles (Mew Pack, etc.)
+  /** Real chase pulls customers have hit out of MHF packs — used as social proof. */
+  showcaseHits: SiteProduct[];
   hasGiveaway: boolean;
   fetchedAt: string;
 };
 
-const SCRAPER_SYSTEM_PROMPT = `Extract product data from this Mystery Hits Factory homepage HTML. Mystery Hits Factory is a Pokemon TCG reseller selling mystery packs, sealed singles, and themed bundles.
+/**
+ * Known showcase hits we always want available to the content planner, even if
+ * the live scrape misses the randomizer / hits section. Order matters — the
+ * first entry is treated as the headline hit on cold days.
+ */
+const KNOWN_SHOWCASE_HITS: SiteProduct[] = [
+  {
+    name: "Charizard ex Ultra Rare PSA 10",
+    url: "https://mysteryhitsfactory.com",
+    price: "$230",
+    blurb: "Top hit pulled from a Mystery Hits Factory pack — graded PSA 10, valued at $230.",
+  },
+];
+
+const SCRAPER_SYSTEM_PROMPT = `Extract product data from this Mystery Hits Factory homepage HTML. Mystery Hits Factory is a Pokemon TCG brand selling mystery packs, sealed singles, and themed bundles.
 
 Return ONLY a JSON object, no prose, no code fence:
 {
@@ -34,6 +50,9 @@ Return ONLY a JSON object, no prose, no code fence:
   "featuredProducts": [...same shape...],
   "recentInventory": [...sealed booster packs / singles, named sets like Crown Zenith, Silver Tempest, Stellar Crown...],
   "themedPacks": [...themed bundles like Mew Pack, Triple Hit Bundle...],
+  "showcaseHits": [
+    {"name": "Charizard ex Ultra Rare PSA 10", "url": "https://mysteryhitsfactory.com", "imageUrl": "https://...", "price": "$230", "blurb": "top pull from a mystery pack"}
+  ],
   "hasGiveaway": true | false
 }
 
@@ -42,7 +61,12 @@ Rules:
 - Skip nav links, footer, social-media links, legal pages.
 - Only return entries that look like real products / drops with at least a name and a URL.
 - If you can't determine a field, omit it entirely (don't return null/empty strings).
-- Distinguish: "activeDrops" = time-limited drops with countdown/end-time signals. "featuredProducts" = highlighted items without a deadline. "recentInventory" = sealed singles with set names. "themedPacks" = bundles named after a theme.
+- Distinguish:
+    "activeDrops" = time-limited drops with countdown/end-time signals.
+    "featuredProducts" = highlighted items without a deadline.
+    "recentInventory" = sealed singles with set names.
+    "themedPacks" = bundles named after a theme.
+    "showcaseHits" = real chase cards customers have pulled out of MHF packs — usually shown in a "Recent Hits", "Top Hits", or randomizer section on the homepage. These are graded slabs / chase pulls used as social proof, NOT products for sale. Capture the card name, price/value, and image URL when present.
 - Cap each list at 6 items max.`;
 
 export async function scrapeSite(): Promise<SiteContext> {
@@ -83,13 +107,26 @@ export async function scrapeSite(): Promise<SiteContext> {
     featuredProducts: data.featuredProducts ?? [],
     recentInventory: data.recentInventory ?? [],
     themedPacks: data.themedPacks ?? [],
+    showcaseHits: mergeShowcaseHits(data.showcaseHits ?? []),
     hasGiveaway: data.hasGiveaway ?? false,
     fetchedAt: new Date().toISOString(),
   };
   console.log(
-    `[site] parsed: ${ctx.activeDrops.length} drops, ${ctx.featuredProducts.length} featured, ${ctx.recentInventory.length} inventory, ${ctx.themedPacks.length} themed, giveaway=${ctx.hasGiveaway}`
+    `[site] parsed: ${ctx.activeDrops.length} drops, ${ctx.featuredProducts.length} featured, ${ctx.recentInventory.length} inventory, ${ctx.themedPacks.length} themed, ${ctx.showcaseHits.length} hits, giveaway=${ctx.hasGiveaway}`
   );
   return ctx;
+}
+
+/**
+ * Ensure every known showcase hit is present in context, even when the scraper
+ * misses the randomizer/hits section. Scraped entries win on name collision so
+ * a fresher imageUrl/price from the live site overrides the hardcoded fallback.
+ */
+function mergeShowcaseHits(scraped: SiteProduct[]): SiteProduct[] {
+  const byName = new Map<string, SiteProduct>();
+  for (const hit of KNOWN_SHOWCASE_HITS) byName.set(hit.name.toLowerCase(), hit);
+  for (const hit of scraped) byName.set(hit.name.toLowerCase(), hit);
+  return Array.from(byName.values());
 }
 
 /** Try the scrape but never throw — daily generator must continue if site is down. */
@@ -98,7 +135,16 @@ export async function scrapeSiteSafely(): Promise<SiteContext | null> {
     return await scrapeSite();
   } catch (err) {
     console.warn(`[site] scrape failed, falling back to no-context mode: ${(err as Error).message}`);
-    return null;
+    // Still surface known showcase hits so content planning has something to work with.
+    return {
+      activeDrops: [],
+      featuredProducts: [],
+      recentInventory: [],
+      themedPacks: [],
+      showcaseHits: [...KNOWN_SHOWCASE_HITS],
+      hasGiveaway: false,
+      fetchedAt: new Date().toISOString(),
+    };
   }
 }
 

@@ -7,6 +7,7 @@ export type ContentTheme =
   | "new-arrival"
   | "giveaway-hype"
   | "seller-supply"
+  | "hit-spotlight"
   | "hobby-tip"
   | "intro"
   | "value-add";
@@ -33,6 +34,8 @@ const THEME_DESCRIPTIONS: Record<ContentTheme, string> = {
     "Drive engagement to the SpinFREE / giveaway feature on the site. Free entry framing, FOMO-friendly, low-friction CTA.",
   "seller-supply":
     "Pitch to Whatnot sellers, break-show hosts, and other Pokemon resellers — our mystery packs are built to be cracked on stream. Reference guaranteed minimums, hit ratios, and how a stocked tier lineup makes for great live content. Speak peer-to-peer to other sellers, not as a competing seller.",
+  "hit-spotlight":
+    "Social proof: spotlight a REAL chase card a customer actually pulled out of one of our mystery packs. Use the anchor product's exact card name and dollar value. Frame it as 'this came out of one of our packs' — proof that big hits are live, not just marketing. Do NOT describe it as a product for sale; it's a past pull. Drive viewers to grab a pack and chase one themselves.",
   "hobby-tip":
     "An educational or insightful tip about the Pokemon TCG hobby (grading, storage, set knowledge, vintage vs. modern, pack/box value, what makes a card a chase, common mistakes new collectors make).",
   intro:
@@ -149,6 +152,7 @@ function buildThemeRotation(siteContext: SiteContext | null): ContentTheme[] {
     rotation.push("new-arrival");
   }
   if (siteContext?.hasGiveaway) rotation.push("giveaway-hype");
+  if (siteContext?.showcaseHits.length) rotation.push("hit-spotlight");
   // Always-viable themes
   rotation.push("tier-spotlight");
   rotation.push("seller-supply");
@@ -193,6 +197,9 @@ export function pickAnchorForTheme(
       break;
     case "new-arrival":
       sources = [siteContext.themedPacks, siteContext.recentInventory];
+      break;
+    case "hit-spotlight":
+      sources = [siteContext.showcaseHits];
       break;
     default:
       // tier-spotlight, giveaway-hype, seller-supply, hobby-tip, value-add, intro
