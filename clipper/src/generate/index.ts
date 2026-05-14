@@ -2,7 +2,7 @@ import { spawn } from "node:child_process";
 import { copyFile, mkdir, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
-import { pickThemeForDay, pickAnchorForTheme, planContent, type ContentPlan } from "./plan.ts";
+import { pickThemeForDay, pickAnchorForTheme, planContent, type ContentPlan, type ContentTheme } from "./plan.ts";
 import { generateImage } from "./image.ts";
 import { pickAndStageStockPhoto } from "./stock.ts";
 import { scrapeSiteSafely } from "../site/scrape.ts";
@@ -32,7 +32,8 @@ export type GenerateResult = {
  */
 export async function generatePromoVideo(
   workDir: string,
-  brandColor: string = "#FFD700"
+  brandColor: string = "#FFD700",
+  forceTheme?: string
 ): Promise<GenerateResult> {
   if (!existsSync(REMOTION_DIR)) {
     throw new Error(`Remotion dir not found at ${REMOTION_DIR}`);
@@ -41,7 +42,9 @@ export async function generatePromoVideo(
   await mkdir(REMOTION_PUBLIC, { recursive: true });
 
   const siteContext = await scrapeSiteSafely();
-  const theme = pickThemeForDay(siteContext);
+  const theme: ContentTheme = forceTheme
+    ? (forceTheme as ContentTheme)
+    : pickThemeForDay(siteContext);
   const anchorProduct = pickAnchorForTheme(theme, siteContext);
   console.log(`[generate] theme: ${theme}`);
   if (anchorProduct) {

@@ -10,13 +10,22 @@ import { captionFor } from "./config.ts";
 const DRY_RUN = process.argv.includes("--dry-run");
 const PLATFORMS: Platform[] = ["tiktok", "instagram", "facebook"];
 
+/** Optional `--theme=<name>` override forces a specific content theme instead
+ *  of using the day-index rotation. Useful for verifying a new theme
+ *  (e.g. hit-spotlight) without waiting for it to come up naturally. */
+const FORCE_THEME = (() => {
+  const arg = process.argv.find((a) => a.startsWith("--theme="));
+  return arg ? arg.slice("--theme=".length) : undefined;
+})();
+
 async function main() {
   const today = new Date().toISOString().slice(0, 10);
-  const workDir = resolve(process.cwd(), "work", `daily-${today}`);
+  const suffix = FORCE_THEME ? `-${FORCE_THEME}` : "";
+  const workDir = resolve(process.cwd(), "work", `daily-${today}${suffix}`);
   await mkdir(workDir, { recursive: true });
 
-  console.log(`[daily] generating promo content for ${today}`);
-  const { videoPath, plan } = await generatePromoVideo(workDir);
+  console.log(`[daily] generating promo content for ${today}${FORCE_THEME ? ` (forced theme: ${FORCE_THEME})` : ""}`);
+  const { videoPath, plan } = await generatePromoVideo(workDir, "#FFD700", FORCE_THEME);
   console.log(`[daily] video ready: ${videoPath}`);
 
   if (DRY_RUN) {
