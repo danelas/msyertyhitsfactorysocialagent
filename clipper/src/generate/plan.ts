@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type { SiteContext, SiteProduct } from "../site/scrape.ts";
+import type { ResearchNugget } from "./research.ts";
 
 export type ContentTheme =
   | "live-drop-urgency"
@@ -10,7 +11,16 @@ export type ContentTheme =
   | "hit-spotlight"
   | "hobby-tip"
   | "intro"
-  | "value-add";
+  | "value-add"
+  | "market-watch"
+  | "set-buzz";
+
+/** Themes that need a fresh web-research nugget before planning. */
+export const RESEARCH_THEMES: ContentTheme[] = ["market-watch", "set-buzz"];
+
+export function isResearchTheme(theme: ContentTheme): boolean {
+  return RESEARCH_THEMES.includes(theme);
+}
 
 export type ContentPlan = {
   theme: ContentTheme;
@@ -42,6 +52,10 @@ const THEME_DESCRIPTIONS: Record<ContentTheme, string> = {
     "Brand intro — who Mystery Hits Factory is, what we do (mystery Pokemon packs across six tiers, sealed singles, themed bundles, drops on mysteryhitsfactory.com), why it's fun.",
   "value-add":
     "Genuine Pokemon-hobby value: a fact, a take, a perspective on the TCG that makes the hobby more interesting to a casual viewer (e.g., why WOTC era is special, what alt arts are, why sealed product holds value, etc.).",
+  "market-watch":
+    "Research-driven market beat: lead with a SPECIFIC, current price move or value trend from the provided research nugget (real card/set names, real numbers). Frame it as proof that the chase is live and worth riding — and a mystery pack is the fun, affordable way to chase that upside. Engagement-bait: invite viewers to react ('would you pull this?', 'who's holding this set?').",
+  "set-buzz":
+    "Research-driven hype on a specific current/just-dropped set or chase card from the provided research nugget. What's hot right now and why collectors care. Tie it to grabbing a mystery pack to chase that exact set's hits. Ask a question that drives comments.",
 };
 
 const SYSTEM_PROMPT = `You write short, scroll-stopping social posts for "Mystery Hits Factory" — a Pokemon TCG mystery-pack maker and website (mysteryhitsfactory.com) that sells:
@@ -72,16 +86,24 @@ ALLOWED imagePrompt aesthetic — pure abstract studio / brand backgrounds:
 - Typography-friendly composition with strong negative space in the center for text overlays.
 - Always specify 9:16 vertical portrait composition.
 
+CTA + caption rules — these posts exist to drive sales, so make the ask product-forward:
+- The cta is ALWAYS a concrete action toward the product/site: "GRAB A PACK", "SHOP THE DROP", "OPEN ONE TODAY", "CLAIM YOURS", "PULL ONE NOW". Never a soft/branding cta like "FOLLOW US" or "STAY TUNED".
+- When an anchor product is provided, the caption must reference THAT product by name and push the viewer to shop it (the specific product URL is appended automatically — write the caption so the link is the obvious next step, e.g. "Grab the Vault Drop before it's gone 👇").
+- When there's no anchor product, still close on a clear shop-the-packs CTA pointing to mysteryhitsfactory.com.
+- Keep it natural, not spammy — one strong CTA, not three.
+
 Output ONLY valid JSON, no prose, no code fence:
 {
   "hook": "3-6 word ALL-CAPS on-screen hook (super punchy, no period)",
   "body": "1 sentence (12-25 words) — the actual point",
-  "cta": "3-6 word ALL-CAPS call-to-action",
+  "cta": "3-6 word ALL-CAPS product-forward call-to-action (see CTA rules)",
   "imagePrompt": "Background prompt following the IP rules above.",
-  "caption": "1-2 sentence social caption. No hashtags, no @-handles — those are added per platform."
+  "caption": "1-2 sentence social caption that lands on a product CTA. No hashtags, no @-handles, no raw URL — those are added per platform."
 }
 
-When site context is provided, use the SPECIFIC product/drop name in the hook and body. Use real prices, real tier names, real urgency signals. Don't invent details.`;
+When site context is provided, use the SPECIFIC product/drop name in the hook and body. Use real prices, real tier names, real urgency signals. Don't invent details.
+
+When a research nugget is provided, the hook and body MUST be built on its real, current facts (the specific card/set names and numbers it contains) — that's what makes the post credible and exciting. Then bridge to the brand: opening a mystery pack is how you chase exactly that kind of hit. Do not contradict or exaggerate the nugget.`;
 
 function buildSiteContextLines(
   siteContext: SiteContext | null,
@@ -110,15 +132,25 @@ function buildSiteContextLines(
 export async function planContent(
   theme: ContentTheme,
   siteContext: SiteContext | null = null,
-  anchorProduct: SiteProduct | null = null
+  anchorProduct: SiteProduct | null = null,
+  research: ResearchNugget | null = null
 ): Promise<ContentPlan> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY not set");
   const client = new Anthropic({ apiKey });
 
   const ctxLines = buildSiteContextLines(siteContext, anchorProduct);
+  const researchLines = research
+    ? [
+        `Research nugget (build the post on these REAL, current facts):`,
+        `- Headline: ${research.headline}`,
+        `- Detail: ${research.detail}`,
+        `- Brand angle: ${research.angle}`,
+      ].join("\n")
+    : "";
   const userPrompt =
     `Theme: ${theme}\n${THEME_DESCRIPTIONS[theme]}\n\n` +
+    (researchLines ? `${researchLines}\n\n` : "") +
     (ctxLines ? `Site context:\n${ctxLines}\n\n` : "") +
     `Generate one post.`;
 
@@ -146,19 +178,53 @@ export async function planContent(
  * through different content angles.
  */
 function buildThemeRotation(siteContext: SiteContext | null): ContentTheme[] {
-  const rotation: ContentTheme[] = [];
-  if (siteContext?.activeDrops.length) rotation.push("live-drop-urgency");
-  if (siteContext?.themedPacks.length || siteContext?.recentInventory.length) {
-    rotation.push("new-arrival");
+  // Product-anchored themes — each of these pulls a real product (and its
+  // image) into the post. These should dominate the feed.
+  const product: ContentTheme[] = [];
+  if (siteContext?.activeDrops.length) product.push("live-drop-urgency");
+  if (
+    siteContext?.themedPacks.length ||
+    siteContext?.recentInventory.length ||
+    siteContext?.featuredProducts.length
+  ) {
+    product.push("new-arrival");
   }
-  if (siteContext?.hasGiveaway) rotation.push("giveaway-hype");
-  if (siteContext?.showcaseHits.length) rotation.push("hit-spotlight");
-  // Always-viable themes
-  rotation.push("tier-spotlight");
-  rotation.push("seller-supply");
-  rotation.push("hobby-tip");
-  rotation.push("value-add");
-  rotation.push("intro");
+  if (siteContext?.showcaseHits.length) product.push("hit-spotlight");
+  // tier-spotlight now anchors on a real tier pack (see pickAnchorForTheme),
+  // so it counts as product content.
+  product.push("tier-spotlight");
+
+  // Engagement / research-driven angles — grounded in fresh web research about
+  // the live Pokemon market, then tied back to the packs. These drive comments
+  // and shares, so they ride alongside product themes rather than as filler.
+  const engagement: ContentTheme[] = ["market-watch", "set-buzz"];
+
+  // Evergreen, non-product angles — kept as a minority so the feed stays
+  // product-led instead of drifting into generic hobby content.
+  const evergreen: ContentTheme[] = [];
+  if (siteContext?.hasGiveaway) evergreen.push("giveaway-hype");
+  evergreen.push("seller-supply");
+  evergreen.push("hobby-tip");
+  evergreen.push("value-add");
+  evergreen.push("intro");
+
+  // If the site gave us nothing, fall back to engagement + evergreen so we
+  // still ship — research themes don't need site data.
+  if (product.length === 0) return [...engagement, ...evergreen];
+
+  // Product-led rotation: cycle every product theme, then drop in a single
+  // engagement (research) angle and a single evergreen angle — yielding a feed
+  // that is mostly products, regularly punctuated by a timely market post, with
+  // the occasional evergreen palate cleanser. Rotate the product order each
+  // cycle so the same theme never lands two days running at a cycle boundary.
+  const rotation: ContentTheme[] = [];
+  const cycles = Math.max(engagement.length, evergreen.length);
+  for (let c = 0; c < cycles; c++) {
+    const offset = c % product.length;
+    rotation.push(...product.slice(offset), ...product.slice(0, offset));
+    rotation.push(engagement[c % engagement.length]);
+    rotation.push(evergreen[c % evergreen.length]);
+  }
   return rotation;
 }
 
@@ -193,16 +259,33 @@ export function pickAnchorForTheme(
   let sources: SiteProduct[][];
   switch (theme) {
     case "live-drop-urgency":
-      sources = [siteContext.activeDrops];
+      sources = [siteContext.activeDrops, siteContext.featuredProducts];
       break;
     case "new-arrival":
-      sources = [siteContext.themedPacks, siteContext.recentInventory];
+      sources = [
+        siteContext.themedPacks,
+        siteContext.recentInventory,
+        siteContext.featuredProducts,
+      ];
       break;
     case "hit-spotlight":
       sources = [siteContext.showcaseHits];
       break;
+    case "tier-spotlight":
+    case "market-watch":
+    case "set-buzz":
+      // tier-spotlight and the research themes still drive viewers to buy a
+      // pack — anchor on a real product so the post carries an actual product
+      // image and a shoppable URL instead of an abstract background.
+      sources = [
+        siteContext.featuredProducts,
+        siteContext.themedPacks,
+        siteContext.recentInventory,
+        siteContext.activeDrops,
+      ];
+      break;
     default:
-      // tier-spotlight, giveaway-hype, seller-supply, hobby-tip, value-add, intro
+      // giveaway-hype, seller-supply, hobby-tip, value-add, intro
       // — these aren't anchored on a specific product
       return null;
   }

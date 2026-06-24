@@ -2,11 +2,34 @@ import { spawn } from "node:child_process";
 import { copyFile, mkdir, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
-import { pickThemeForDay, pickAnchorForTheme, planContent, type ContentPlan, type ContentTheme } from "./plan.ts";
+import { pickThemeForDay, pickAnchorForTheme, planContent, isResearchTheme, type ContentPlan, type ContentTheme } from "./plan.ts";
 import { generateImage } from "./image.ts";
 import { pickAndStageStockPhoto } from "./stock.ts";
-import { scrapeSiteSafely } from "../site/scrape.ts";
+import { researchPokemonNugget, type ResearchNugget } from "./research.ts";
+import { scrapeSiteSafely, type SiteContext, type SiteProduct } from "../site/scrape.ts";
 import { downloadProductImage, imageExtFromUrl } from "../site/fetch-image.ts";
+
+/**
+ * Pick any product on the site that exposes an image, so even evergreen posts
+ * (which have no anchor product) can still lead with a real product photo
+ * rather than a stock/AI background. Ordered by how product-forward each bucket
+ * is: live drops → featured → themed packs → inventory → showcase hits.
+ */
+function firstProductWithImage(siteContext: SiteContext | null): SiteProduct | null {
+  if (!siteContext) return null;
+  const buckets = [
+    siteContext.activeDrops,
+    siteContext.featuredProducts,
+    siteContext.themedPacks,
+    siteContext.recentInventory,
+    siteContext.showcaseHits,
+  ];
+  for (const bucket of buckets) {
+    const hit = bucket.find((p) => p.imageUrl);
+    if (hit) return hit;
+  }
+  return null;
+}
 
 const REMOTION_DIR = resolve(process.cwd(), "../remotion");
 const REMOTION_PUBLIC = resolve(REMOTION_DIR, "public");
@@ -51,7 +74,16 @@ export async function generatePromoVideo(
     console.log(`[generate] anchor: ${anchorProduct.name} (${anchorProduct.url})`);
   }
 
-  const plan = await planContent(theme, siteContext, anchorProduct);
+  // Research-driven themes pull a real, current market nugget from the web
+  // first. If research fails, plan without it (the prompt still produces a
+  // valid post, just without the live hook).
+  let research: ResearchNugget | null = null;
+  if (isResearchTheme(theme)) {
+    console.log(`[generate] researching live Pokemon market for ${theme}...`);
+    research = await researchPokemonNugget();
+  }
+
+  const plan = await planContent(theme, siteContext, anchorProduct, research);
   console.log(`[generate] hook: ${plan.hook}`);
   console.log(`[generate] body: ${plan.body}`);
   console.log(`[generate] cta:  ${plan.cta}`);
@@ -60,16 +92,25 @@ export async function generatePromoVideo(
   let imageStagedName: string | null = null;
   let imageSource: ImageSource = "ai";
 
-  // 1. Site product image (preferred when we have an anchor product with imageUrl)
-  if (anchorProduct?.imageUrl) {
-    const ext = imageExtFromUrl(anchorProduct.imageUrl);
+  // 1. Site product image. Prefer this post's anchor product, but on
+  //    non-anchored (evergreen) days fall back to ANY site product that
+  //    exposes an image so the feed still leads with real product photos.
+  const imageProduct = anchorProduct?.imageUrl
+    ? anchorProduct
+    : firstProductWithImage(siteContext);
+  if (imageProduct?.imageUrl) {
+    const ext = imageExtFromUrl(imageProduct.imageUrl);
     const candidate = `site-${stamp}${ext}`;
     const stagedPath = resolve(REMOTION_PUBLIC, candidate);
-    const ok = await downloadProductImage(anchorProduct.imageUrl, stagedPath);
+    const ok = await downloadProductImage(imageProduct.imageUrl, stagedPath);
     if (ok) {
       imageStagedName = candidate;
       imageSource = "site-product";
-      console.log(`[generate] using site product image`);
+      console.log(
+        `[generate] using site product image${
+          imageProduct === anchorProduct ? "" : ` (${imageProduct.name})`
+        }`
+      );
     } else {
       console.log(`[generate] site image download failed, trying stock/`);
     }
@@ -120,7 +161,7 @@ export async function generatePromoVideo(
   await writeFile(
     resolve(workDir, "plan.json"),
     JSON.stringify(
-      { ...plan, imageSource, imageStagedName, anchorProduct, siteFetchedAt: siteContext?.fetchedAt },
+      { ...plan, imageSource, imageStagedName, anchorProduct, research, siteFetchedAt: siteContext?.fetchedAt },
       null,
       2
     ),

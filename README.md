@@ -139,11 +139,24 @@ When the scraper finds something live on mysteryhitsfactory.com, the planner pic
 
 If the scraper fails or returns nothing usable, the daily generator falls back to evergreen themes (live-promo, hobby-tip, intro, value-add) so it still ships content.
 
+The feed is **product-led**: product-anchored themes (`live-drop-urgency`, `new-arrival`, `hit-spotlight`, `tier-spotlight`) dominate the rotation, every theme that can anchors on a real product so the post carries an actual product image + shoppable URL, and even evergreen days fall back to *any* site product image before stock/AI. CTAs and captions are tuned to push the sale ("GRAB A PACK", "SHOP THE DROP") rather than soft branding.
+
+### Research-driven engagement themes
+
+Two themes are backed by live web research (via Claude's web-search tool) so the feed stays timely and drives comments, while still tying back to the packs:
+
+| Theme | What it does |
+|---|---|
+| `market-watch` | Leads with a real, current price move / value trend (specific card + numbers pulled from a web search), framed as proof the chase is live — grab a pack to ride it. |
+| `set-buzz` | Hype on a specific just-dropped set or chase card collectors care about right now; asks a question to drive comments. |
+
+These pull a fresh research nugget at run time and anchor on a real product (so they still carry a product image + URL). If research fails, the post still ships without the live hook. Test one with `npm run daily:dry -- --theme=market-watch`.
+
 ### Background image priority
 
 For each daily run the generator picks a background in this order:
 
-1. **Site product image** — when the chosen post is anchored on a specific drop/product and the site exposes an image URL, the generator downloads it and uses it as the background. (First-sale-clean since you sell the products on the site.)
+1. **Site product image** — the post's anchor product when it has an image, otherwise *any* site product with an image (so even evergreen days lead with a real product photo). First-sale-clean since you sell the products on the site.
 2. **Your stock photos** — anything in `stock/` at the repo root.
 3. **AI abstract background** — DALL-E 3 fallback, locked to studio backgrounds with no Pokemon-evocative imagery.
 
@@ -204,7 +217,9 @@ If a clip comes out wrong, the fix is usually one of:
 - **Captions too small / wrong position** → edit `remotion/src/StreamClip.tsx`
 - **Want more or fewer clips per stream** → `SETTINGS.momentsPerStream` in `clipper/src/config.ts`
 - **Daily promo content feels generic / off-voice** → edit `SYSTEM_PROMPT` in `clipper/src/generate/plan.ts`
-- **Daily theme rotation wrong (too much promo / not enough)** → edit `pickThemeForDay` in `clipper/src/generate/plan.ts`
+- **Daily theme rotation wrong (too much promo / not enough)** → edit `buildThemeRotation` in `clipper/src/generate/plan.ts` (product / engagement / evergreen groups)
+- **Research themes off-topic or want different angles** → edit `RESEARCH_SYSTEM_PROMPT` in `clipper/src/generate/research.ts`; theme copy lives in `THEME_DESCRIPTIONS` (`market-watch` / `set-buzz`) in `plan.ts`
+- **CTAs / captions not pushing the sale hard enough** → tighten the "CTA + caption rules" block in `SYSTEM_PROMPT` in `clipper/src/generate/plan.ts`
 - **Daily video styling** → edit `remotion/src/PromoCard.tsx`
 - **AI image looks wrong** → tighten the imagePrompt rules in `SYSTEM_PROMPT` in `plan.ts`
 - **Scraper missing products / picking wrong anchor** → edit `SCRAPER_SYSTEM_PROMPT` or `pickAnchorProduct` in `clipper/src/site/scrape.ts`
