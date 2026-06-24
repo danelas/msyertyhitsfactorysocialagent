@@ -39,15 +39,32 @@ export const PromoCard: React.FC<PromoCardProps> = ({
   const ctaStart = BODY_END * fps;
   const ctaFrames = durationInFrames - ctaStart;
 
-  // Slow zoom (Ken Burns) on the bg image so a static photo feels alive.
+  // Slow zoom (Ken Burns) — applied only to the blurred backdrop so the sharp
+  // product layer never drifts out of frame.
   const scale = interpolate(frame, [0, durationInFrames], [1, 1.08]);
 
   return (
     <AbsoluteFill style={{ backgroundColor: "#000" }}>
+      {/* Blurred fill: a cover-cropped, blurred copy of the same image fills the
+          9:16 frame so off-ratio product photos don't leave black bars — without
+          cropping the actual product (that's the contained layer below). */}
       <AbsoluteFill style={{ transform: `scale(${scale})` }}>
         <Img
           src={staticFile(backgroundImage)}
-          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+          style={{
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            filter: "blur(36px) brightness(0.55)",
+            transform: "scale(1.2)",
+          }}
+        />
+      </AbsoluteFill>
+      {/* Sharp product, fully contained — never cropped, whatever its ratio. */}
+      <AbsoluteFill style={{ justifyContent: "center", alignItems: "center" }}>
+        <Img
+          src={staticFile(backgroundImage)}
+          style={{ width: "100%", height: "100%", objectFit: "contain" }}
         />
       </AbsoluteFill>
       <AbsoluteFill style={{ backgroundColor: "rgba(0,0,0,0.22)" }} />
