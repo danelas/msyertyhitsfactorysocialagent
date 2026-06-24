@@ -12,6 +12,24 @@ on:
         default: "false"
         type: choice
         options: ["true", "false"]
+      theme:
+        description: "Force a content theme (blank = daily rotation)"
+        required: false
+        default: ""
+        type: choice
+        options:
+          - ""
+          - market-watch
+          - set-buzz
+          - live-drop-urgency
+          - new-arrival
+          - hit-spotlight
+          - tier-spotlight
+          - giveaway-hype
+          - seller-supply
+          - hobby-tip
+          - value-add
+          - intro
 
 jobs:
   post:
@@ -77,11 +95,17 @@ jobs:
           INSTAGRAM_HANDLE: mystery.hits.factory
           FACEBOOK_PAGE: Mystery Hits Factory
           DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+          FORCE_THEME: ${{ github.event.inputs.theme || '' }}
         run: |
+          THEME_ARG=""
+          if [ -n "$FORCE_THEME" ]; then
+            THEME_ARG="-- --theme=$FORCE_THEME"
+            echo "Forcing theme: $FORCE_THEME"
+          fi
           if [ "$DRY_RUN" = "true" ]; then
-            npm run daily:dry
+            npm run daily:dry $THEME_ARG
           else
-            npm run daily
+            npm run daily $THEME_ARG
           fi
 
       - name: Upload artifacts
