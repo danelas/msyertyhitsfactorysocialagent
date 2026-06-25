@@ -154,7 +154,9 @@ To keep the feed from reading as one long ad, **two engagement angles land every
 | `nostalgia` | — | Relatable throwback (ripping packs as a kid, chasing the holo Charizard) — makes returning collectors feel seen. |
 | `quiz` | — | Interactive challenge ("Can you name this set?") that makes viewers comment their answer. |
 
-Research themes pull a fresh nugget at run time; if research fails the post still ships without the live hook. The interactive themes use the normal background priority for visual variety. Test any with `npm run daily:dry -- --theme=fun-fact`.
+Research themes pull a fresh nugget at run time; if research fails the post still ships without the live hook. Test any with `npm run daily:dry -- --theme=fun-fact`.
+
+**Two visual formats.** Product / market posts render as a **product card** (product photo + sequenced hook → body → CTA). The interactive engagement themes (`fun-fact`, `poll-debate`, `nostalgia`, `quiz`) render as a **statement card** — a bold branded layout with a category badge ("DID YOU KNOW?", "YOU DECIDE", "QUIZ TIME", "REMEMBER THIS?"), a big headline, and a CTA on a dark gold-glow background (no product photo) — so the feed isn't visually monotonous. The variant is chosen per theme in `cardStyleForTheme` ([clipper/src/generate/index.ts](clipper/src/generate/index.ts)); both layouts live in `remotion/src/PromoCard.tsx`.
 
 > The old `hit-spotlight` ("someone pulled this from our pack") theme has been removed.
 

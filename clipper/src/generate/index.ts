@@ -31,6 +31,29 @@ function firstProductWithImage(siteContext: SiteContext | null): SiteProduct | n
   return null;
 }
 
+/**
+ * Map a theme to its Remotion card style. Interactive engagement themes render
+ * as a bold branded "statement" card (with a category badge) instead of a
+ * product-photo card, so the feed has visually distinct formats.
+ */
+function cardStyleForTheme(theme: ContentTheme): {
+  variant: "product" | "statement";
+  label: string;
+} {
+  switch (theme) {
+    case "fun-fact":
+      return { variant: "statement", label: "DID YOU KNOW?" };
+    case "poll-debate":
+      return { variant: "statement", label: "YOU DECIDE" };
+    case "quiz":
+      return { variant: "statement", label: "QUIZ TIME" };
+    case "nostalgia":
+      return { variant: "statement", label: "REMEMBER THIS?" };
+    default:
+      return { variant: "product", label: "" };
+  }
+}
+
 const REMOTION_DIR = resolve(process.cwd(), "../remotion");
 const REMOTION_PUBLIC = resolve(REMOTION_DIR, "public");
 
@@ -137,13 +160,17 @@ export async function generatePromoVideo(
     imageSource = "ai";
   }
 
+  const { variant, label } = cardStyleForTheme(theme);
   const props = {
     backgroundImage: imageStagedName,
     hook: plan.hook,
     body: plan.body,
     cta: plan.cta,
     brandColor,
+    variant,
+    label,
   };
+  console.log(`[generate] card variant: ${variant}${label ? ` (${label})` : ""}`);
   const propsPath = resolve(workDir, "props.json");
   await writeFile(propsPath, JSON.stringify(props), "utf8");
 
