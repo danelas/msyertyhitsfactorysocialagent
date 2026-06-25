@@ -1,0 +1,33 @@
+name: MHF Check Connections
+
+# Verify which platforms are actually connected to the Upload-Post profile,
+# without rendering or posting. Run from Actions → MHF Check Connections.
+on:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: clipper
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: clipper/package-lock.json
+
+      - name: Install clipper deps
+        run: npm ci
+
+      - name: Check Upload-Post connections
+        env:
+          UPLOAD_POST_API_KEY: ${{ secrets.UPLOAD_POST_API_KEY }}
+          UPLOAD_POST_USER: ${{ secrets.UPLOAD_POST_USER }}
+          FACEBOOK_PAGE_ID: ${{ secrets.FACEBOOK_PAGE_ID }}
+        run: npm run check

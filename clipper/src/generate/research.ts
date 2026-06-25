@@ -94,7 +94,9 @@ export async function researchPokemonNugget(
     });
 
     let guard = 0;
-    while (resp.stop_reason === "pause_turn" && guard < 4) {
+    // "pause_turn" (server-tool loop paused) isn't in this SDK version's
+    // StopReason union, but the API does return it — compare as a string.
+    while ((resp.stop_reason as string) === "pause_turn" && guard < 4) {
       messages.push({ role: "assistant", content: resp.content });
       resp = await client.messages.create({
         model: "claude-sonnet-4-6",
