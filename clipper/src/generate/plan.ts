@@ -95,6 +95,8 @@ CRITICAL IP RULES for the imagePrompt (used as a fallback when the post has no s
 - NO card layouts, booster-pack shapes, ETB-style boxes, holographic-foil patterns evocative of Pokemon holos.
 - NO creature, animal, character, or "mascot" imagery of ANY kind. Not even abstracted.
 - NO trading-card imagery at all.
+- NO product packaging of ANY kind — no mystery packs, pouches, blind bags, foil bags, booster packs, card packs, boxes, ETBs, or tins. Never render anything that could be mistaken for a Mystery Hits Factory product. We don't want fabricated, fake-looking product shots; the AI image is a pure background ONLY.
+- NO products or merchandise of any sort sitting in the scene — just an empty abstract backdrop.
 
 ALLOWED imagePrompt aesthetic — pure abstract studio / brand backgrounds:
 - Dramatic studio lighting on a solid color or gradient backdrop (deep gold, black, charcoal, deep red, midnight blue).
