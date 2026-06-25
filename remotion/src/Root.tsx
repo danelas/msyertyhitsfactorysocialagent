@@ -42,7 +42,15 @@ export const RemotionRoot: React.FC = () => {
           hook: "OPEN BOXES LIVE",
           body: "Every night we crack packs and pull hits in front of the camera — come watch.",
           cta: "JOIN US TONIGHT",
-          brandColor: "#FFD700" as const,
+          brandColor: "#38bdf8" as const,
+          variant: "product" as const,
+          label: "",
+          optionA: "",
+          optionB: "",
+          chipBg: "linear-gradient(135deg, #38bdf8, #1d4ed8)",
+          chipText: "#ffffff",
+          accent: "#38bdf8",
+          glow: "#2563eb",
         }}
       />
     </>

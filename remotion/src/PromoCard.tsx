@@ -25,6 +25,15 @@ export const promoCardSchema = z.object({
   /** The two choices for a "versus" poll card. Empty otherwise. */
   optionA: z.string().default(""),
   optionB: z.string().default(""),
+  /** CSS background for text chips / badges (gradient or solid). Falls back to
+   *  brandColor when empty. */
+  chipBg: z.string().default(""),
+  /** Text color on the chips. */
+  chipText: z.string().default("#000000"),
+  /** Solid accent (VS badge, borders). Falls back to brandColor when empty. */
+  accent: z.string().default(""),
+  /** Statement-card background glow color. Falls back to brandColor when empty. */
+  glow: z.string().default(""),
 });
 
 export type PromoCardProps = z.infer<typeof promoCardSchema>;
@@ -48,9 +57,13 @@ const ProductCard: React.FC<PromoCardProps> = ({
   body,
   cta,
   brandColor,
+  chipBg,
+  chipText,
 }) => {
   const { fps, durationInFrames } = useVideoConfig();
   const frame = useCurrentFrame();
+  const bg = chipBg || brandColor;
+  const fg = chipText || "#000";
 
   const hookFrames = HOOK_END * fps;
   const bodyStart = HOOK_END * fps;
@@ -98,7 +111,7 @@ const ProductCard: React.FC<PromoCardProps> = ({
       <AbsoluteFill style={{ backgroundColor: "rgba(0,0,0,0.22)" }} />
 
       <Sequence from={0} durationInFrames={hookFrames}>
-        <BigText text={hook} brandColor={brandColor} position="top" />
+        <BigText text={hook} chipBg={bg} chipText={fg} position="top" />
       </Sequence>
 
       <Sequence from={bodyStart} durationInFrames={bodyFrames}>
@@ -106,17 +119,18 @@ const ProductCard: React.FC<PromoCardProps> = ({
       </Sequence>
 
       <Sequence from={ctaStart} durationInFrames={ctaFrames}>
-        <BigText text={cta} brandColor={brandColor} position="bottom" />
+        <BigText text={cta} chipBg={bg} chipText={fg} position="bottom" />
       </Sequence>
     </AbsoluteFill>
   );
 };
 
-const BigText: React.FC<{ text: string; brandColor: string; position: "top" | "bottom" }> = ({
-  text,
-  brandColor,
-  position,
-}) => {
+const BigText: React.FC<{
+  text: string;
+  chipBg: string;
+  chipText: string;
+  position: "top" | "bottom";
+}> = ({ text, chipBg, chipText, position }) => {
   const frame = useCurrentFrame();
   const { fps, durationInFrames } = useVideoConfig();
   // Hold solid for the first N frames, then fade out at the very end so the
@@ -140,8 +154,8 @@ const BigText: React.FC<{ text: string; brandColor: string; position: "top" | "b
     >
       <div
         style={{
-          backgroundColor: brandColor,
-          color: "#000",
+          background: chipBg,
+          color: chipText,
           fontSize: 96,
           fontWeight: 900,
           fontFamily: '"Arial Black", Impact, sans-serif',
@@ -182,9 +196,15 @@ const StatementCard: React.FC<PromoCardProps> = ({
   cta,
   brandColor,
   label,
+  chipBg,
+  chipText,
+  glow,
 }) => {
   const frame = useCurrentFrame();
   const { fps, durationInFrames } = useVideoConfig();
+  const bg = chipBg || brandColor;
+  const fg = chipText || "#000";
+  const glowC = glow || brandColor;
   const scale = interpolate(frame, [0, durationInFrames], [1, 1.1]);
   const enter = interpolate(frame, [0, Math.round(0.5 * fps)], [0, 1], {
     extrapolateLeft: "clamp",
@@ -212,12 +232,12 @@ const StatementCard: React.FC<PromoCardProps> = ({
           }}
         />
       </AbsoluteFill>
-      {/* Gold glow up top + dark vignette below for legibility. */}
+      {/* Colored glow up top + dark vignette below for legibility. */}
       <AbsoluteFill
         style={{
           background: `radial-gradient(circle at 50% 28%, ${hexA(
-            brandColor,
-            0.3
+            glowC,
+            0.32
           )}, rgba(0,0,0,0) 55%), radial-gradient(circle at 50% 115%, rgba(0,0,0,0.92), rgba(0,0,0,0.35))`,
         }}
       />
@@ -234,8 +254,8 @@ const StatementCard: React.FC<PromoCardProps> = ({
         {label ? (
           <div
             style={{
-              backgroundColor: brandColor,
-              color: "#000",
+              background: bg,
+              color: fg,
               fontSize: 46,
               fontWeight: 900,
               fontFamily: '"Arial Black", Impact, sans-serif',
@@ -296,8 +316,8 @@ const StatementCard: React.FC<PromoCardProps> = ({
       >
         <div
           style={{
-            backgroundColor: brandColor,
-            color: "#000",
+            background: bg,
+            color: fg,
             fontSize: 60,
             fontWeight: 900,
             fontFamily: '"Arial Black", Impact, sans-serif',
@@ -337,8 +357,9 @@ const OptionText: React.FC<{ text: string }> = ({ text }) => (
 
 /**
  * Poll layout — a split this-or-that card. Top half (red) is optionA, bottom
- * half (blue) is optionB, with a gold "VS" badge on the seam, the question
- * pinned at the top, and an engagement CTA at the bottom. Pure comment-bait.
+ * half (blue) is optionB, with a "VS" badge on the seam, the question pinned at
+ * the top, and an engagement CTA at the bottom. Pure comment-bait. The red/blue
+ * halves are fixed (the poll convention); the badge + CTA take the palette accent.
  */
 const VersusCard: React.FC<PromoCardProps> = ({
   hook,
@@ -346,9 +367,15 @@ const VersusCard: React.FC<PromoCardProps> = ({
   brandColor,
   optionA,
   optionB,
+  chipBg,
+  chipText,
+  accent,
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
+  const badgeBg = chipBg || brandColor;
+  const badgeFg = chipText || "#000";
+  const acc = accent || brandColor;
   const enter = interpolate(frame, [0, Math.round(0.4 * fps)], [0, 1], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
@@ -414,7 +441,7 @@ const VersusCard: React.FC<PromoCardProps> = ({
         </div>
       </AbsoluteFill>
 
-      {/* Gold VS badge on the seam. */}
+      {/* VS badge on the seam. */}
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center" }}>
         <div
           style={{
@@ -422,8 +449,8 @@ const VersusCard: React.FC<PromoCardProps> = ({
             width: 210,
             height: 210,
             borderRadius: "50%",
-            backgroundColor: brandColor,
-            color: "#000",
+            background: badgeBg,
+            color: badgeFg,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -446,7 +473,7 @@ const VersusCard: React.FC<PromoCardProps> = ({
           style={{
             backgroundColor: "#000",
             color: "#fff",
-            border: `5px solid ${brandColor}`,
+            border: `5px solid ${acc}`,
             fontSize: 54,
             fontWeight: 900,
             fontFamily: '"Arial Black", Impact, sans-serif',

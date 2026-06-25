@@ -6,6 +6,7 @@ import { pickThemeForDay, pickAnchorForTheme, planContent, isResearchTheme, rese
 import { generateImage } from "./image.ts";
 import { pickAndStageStockPhoto } from "./stock.ts";
 import { researchPokemonNugget, type ResearchNugget } from "./research.ts";
+import { pickPalette } from "./palette.ts";
 import { scrapeSiteSafely, type SiteContext, type SiteProduct } from "../site/scrape.ts";
 import { downloadProductImage, imageExtFromUrl } from "../site/fetch-image.ts";
 
@@ -170,18 +171,27 @@ export async function generatePromoVideo(
   if (theme === "poll-debate" && optionA && optionB) {
     variant = "versus";
   }
+  // Rotate the text-chip color scheme per day so the feed varies between cool
+  // gradients, Pokemon type colors, and the premium website look.
+  const palette = pickPalette(Math.floor(Date.now() / 86400000));
   const props = {
     backgroundImage: imageStagedName,
     hook: plan.hook,
     body: plan.body,
     cta: plan.cta,
-    brandColor,
+    brandColor: palette.accent,
+    chipBg: palette.chipBg,
+    chipText: palette.chipText,
+    accent: palette.accent,
+    glow: palette.glow,
     variant,
     label,
     optionA,
     optionB,
   };
-  console.log(`[generate] card variant: ${variant}${label ? ` (${label})` : ""}`);
+  console.log(
+    `[generate] card variant: ${variant}${label ? ` (${label})` : ""} · palette: ${palette.name}`
+  );
   const propsPath = resolve(workDir, "props.json");
   await writeFile(propsPath, JSON.stringify(props), "utf8");
 

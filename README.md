@@ -160,7 +160,9 @@ Research themes pull a fresh nugget at run time; if research fails the post stil
 
 - **product** — product photo + sequenced hook → body → CTA. Used by sales / market themes.
 - **statement** — bold branded card with a category badge ("DID YOU KNOW?", "QUIZ TIME", "REMEMBER THIS?"), a big headline, and a CTA on a dark gold-glow background (no product photo). Used by `fun-fact`, `quiz`, `nostalgia`.
-- **versus** — split this-or-that poll card: red optionA over blue optionB, gold "VS" badge, "COMMENT YOUR PICK" CTA. Used by `poll-debate` when the plan returns two options (the model fills `optionA`/`optionB`); falls back to the statement card otherwise.
+- **versus** — split this-or-that poll card: red optionA over blue optionB, accent "VS" badge, "COMMENT YOUR PICK" CTA. Used by `poll-debate` when the plan returns two options (the model fills `optionA`/`optionB`); falls back to the statement card otherwise.
+
+**Color palette rotates per day.** The text chips / badges / accents cycle through a set of schemes in [clipper/src/generate/palette.ts](clipper/src/generate/palette.ts) — cool gradients (ocean, amethyst, ice, aurora, nightfall), flat Pokemon type colors (water, grass, psychic, dragon), and a premium "crown" scheme matching the website. No yellow. Edit `PALETTES` to add/remove schemes.
 
 > The old `hit-spotlight` ("someone pulled this from our pack") theme has been removed.
 
