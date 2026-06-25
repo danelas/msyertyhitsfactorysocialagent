@@ -60,8 +60,17 @@ export const PromoCard: React.FC<PromoCardProps> = ({
           }}
         />
       </AbsoluteFill>
-      {/* Sharp product, fully contained — never cropped, whatever its ratio. */}
-      <AbsoluteFill style={{ justifyContent: "center", alignItems: "center" }}>
+      {/* Sharp product, fully contained — never cropped, whatever its ratio.
+          Bounded to a center safe zone (clear top/bottom bands) so the hook and
+          CTA text sit on the blurred fill above/below rather than over the
+          product. */}
+      <AbsoluteFill
+        style={{
+          justifyContent: "center",
+          alignItems: "center",
+          padding: "640px 44px 520px",
+        }}
+      >
         <Img
           src={staticFile(backgroundImage)}
           style={{ width: "100%", height: "100%", objectFit: "contain" }}
@@ -106,7 +115,7 @@ const BigText: React.FC<{ text: string; brandColor: string; position: "top" | "b
       style={{
         justifyContent: position === "top" ? "flex-start" : "flex-end",
         alignItems: "center",
-        padding: position === "top" ? "240px 60px 0" : "0 60px 260px",
+        padding: position === "top" ? "160px 60px 0" : "0 60px 260px",
         opacity,
       }}
     >
