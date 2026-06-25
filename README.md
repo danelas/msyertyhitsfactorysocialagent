@@ -139,18 +139,24 @@ When the scraper finds something live on mysteryhitsfactory.com, the planner pic
 
 If the scraper fails or returns nothing usable, the daily generator falls back to evergreen themes (live-promo, hobby-tip, intro, value-add) so it still ships content.
 
-The feed is **product-led**: product-anchored themes (`live-drop-urgency`, `new-arrival`, `hit-spotlight`, `tier-spotlight`) dominate the rotation, every theme that can anchors on a real product so the post carries an actual product image + shoppable URL, and even evergreen days fall back to *any* site product image before stock/AI. CTAs and captions are tuned to push the sale ("GRAB A PACK", "SHOP THE DROP") rather than soft branding.
+The feed is **product-led**: product-anchored themes (`live-drop-urgency`, `new-arrival`, `tier-spotlight`) dominate the rotation, every theme that can anchors on a real product so the post carries an actual product image + shoppable URL, and other days fall back to *any* site product image before stock/AI. CTAs and captions are tuned to push the sale ("GRAB A PACK", "SHOP THE DROP") rather than soft branding.
 
-### Research-driven engagement themes
+### Engagement themes
 
-Two themes are backed by live web research (via Claude's web-search tool) so the feed stays timely and drives comments, while still tying back to the packs:
+To keep the feed from reading as one long ad, **two engagement angles land every cycle** alongside the product themes. Some are grounded in live web research (via Claude's web-search tool); the rest are interactive formats that drive comments, tags, and shares:
 
-| Theme | What it does |
-|---|---|
-| `market-watch` | Leads with a real, current price move / value trend (specific card + numbers pulled from a web search), framed as proof the chase is live — grab a pack to ride it. |
-| `set-buzz` | Hype on a specific just-dropped set or chase card collectors care about right now; asks a question to drive comments. |
+| Theme | Research? | What it does |
+|---|---|---|
+| `market-watch` | ✅ | Real, current price move / value trend (specific card + numbers) framed as proof the chase is live — grab a pack to ride it. |
+| `set-buzz` | ✅ | Hype on a specific just-dropped set or chase card collectors care about now; asks a question to drive comments. |
+| `fun-fact` | ✅ | A surprising, verifiable Pokemon TCG fact (misprints, record sales, rarity oddities, WOTC lore) — pure scroll-stopper, tag-a-friend bait. |
+| `poll-debate` | — | This-or-that / would-you-rather / hot-take that fans argue about ("Charizard or Blastoise?"). The hook IS the question. |
+| `nostalgia` | — | Relatable throwback (ripping packs as a kid, chasing the holo Charizard) — makes returning collectors feel seen. |
+| `quiz` | — | Interactive challenge ("Can you name this set?") that makes viewers comment their answer. |
 
-These pull a fresh research nugget at run time and anchor on a real product (so they still carry a product image + URL). If research fails, the post still ships without the live hook. Test one with `npm run daily:dry -- --theme=market-watch`.
+Research themes pull a fresh nugget at run time; if research fails the post still ships without the live hook. The interactive themes use the normal background priority for visual variety. Test any with `npm run daily:dry -- --theme=fun-fact`.
+
+> The old `hit-spotlight` ("someone pulled this from our pack") theme has been removed.
 
 ### Background image priority
 
@@ -218,7 +224,8 @@ If a clip comes out wrong, the fix is usually one of:
 - **Want more or fewer clips per stream** → `SETTINGS.momentsPerStream` in `clipper/src/config.ts`
 - **Daily promo content feels generic / off-voice** → edit `SYSTEM_PROMPT` in `clipper/src/generate/plan.ts`
 - **Daily theme rotation wrong (too much promo / not enough)** → edit `buildThemeRotation` in `clipper/src/generate/plan.ts` (product / engagement / evergreen groups)
-- **Research themes off-topic or want different angles** → edit `RESEARCH_SYSTEM_PROMPT` in `clipper/src/generate/research.ts`; theme copy lives in `THEME_DESCRIPTIONS` (`market-watch` / `set-buzz`) in `plan.ts`
+- **Research themes off-topic or want different angles** → edit `FOCUS_PROMPT` in `clipper/src/generate/research.ts` (`market` vs `fun-fact` focus); theme copy lives in `THEME_DESCRIPTIONS` in `plan.ts`
+- **Add / remove an engagement theme or change the mix** → edit the `engagement` group in `buildThemeRotation` and add a `THEME_DESCRIPTIONS` entry (+ a `ContentTheme` union member) in `plan.ts`
 - **CTAs / captions not pushing the sale hard enough** → tighten the "CTA + caption rules" block in `SYSTEM_PROMPT` in `clipper/src/generate/plan.ts`
 - **Daily video styling** → edit `remotion/src/PromoCard.tsx`
 - **AI image looks wrong** → tighten the imagePrompt rules in `SYSTEM_PROMPT` in `plan.ts`

@@ -2,7 +2,7 @@ import { spawn } from "node:child_process";
 import { copyFile, mkdir, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
-import { pickThemeForDay, pickAnchorForTheme, planContent, isResearchTheme, type ContentPlan, type ContentTheme } from "./plan.ts";
+import { pickThemeForDay, pickAnchorForTheme, planContent, isResearchTheme, researchFocusForTheme, type ContentPlan, type ContentTheme } from "./plan.ts";
 import { generateImage } from "./image.ts";
 import { pickAndStageStockPhoto } from "./stock.ts";
 import { researchPokemonNugget, type ResearchNugget } from "./research.ts";
@@ -79,8 +79,9 @@ export async function generatePromoVideo(
   // valid post, just without the live hook).
   let research: ResearchNugget | null = null;
   if (isResearchTheme(theme)) {
-    console.log(`[generate] researching live Pokemon market for ${theme}...`);
-    research = await researchPokemonNugget();
+    const focus = researchFocusForTheme(theme);
+    console.log(`[generate] researching Pokemon ${focus} for ${theme}...`);
+    research = await researchPokemonNugget(focus);
   }
 
   const plan = await planContent(theme, siteContext, anchorProduct, research);

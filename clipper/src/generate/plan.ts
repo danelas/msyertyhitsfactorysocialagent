@@ -1,6 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type { SiteContext, SiteProduct } from "../site/scrape.ts";
-import type { ResearchNugget } from "./research.ts";
+import type { ResearchNugget, ResearchFocus } from "./research.ts";
 
 export type ContentTheme =
   | "live-drop-urgency"
@@ -8,18 +8,26 @@ export type ContentTheme =
   | "new-arrival"
   | "giveaway-hype"
   | "seller-supply"
-  | "hit-spotlight"
   | "hobby-tip"
   | "intro"
   | "value-add"
   | "market-watch"
-  | "set-buzz";
+  | "set-buzz"
+  | "fun-fact"
+  | "poll-debate"
+  | "nostalgia"
+  | "quiz";
 
 /** Themes that need a fresh web-research nugget before planning. */
-export const RESEARCH_THEMES: ContentTheme[] = ["market-watch", "set-buzz"];
+export const RESEARCH_THEMES: ContentTheme[] = ["market-watch", "set-buzz", "fun-fact"];
 
 export function isResearchTheme(theme: ContentTheme): boolean {
   return RESEARCH_THEMES.includes(theme);
+}
+
+/** What angle the web-research pass should chase for a given research theme. */
+export function researchFocusForTheme(theme: ContentTheme): ResearchFocus {
+  return theme === "fun-fact" ? "fun-fact" : "market";
 }
 
 export type ContentPlan = {
@@ -44,8 +52,6 @@ const THEME_DESCRIPTIONS: Record<ContentTheme, string> = {
     "Drive engagement to the SpinFREE / giveaway feature on the site. Free entry framing, FOMO-friendly, low-friction CTA.",
   "seller-supply":
     "Pitch to Whatnot sellers, break-show hosts, and other Pokemon resellers — our mystery packs are built to be cracked on stream. Reference guaranteed minimums, hit ratios, and how a stocked tier lineup makes for great live content. Speak peer-to-peer to other sellers, not as a competing seller.",
-  "hit-spotlight":
-    "Social proof: spotlight a REAL chase card a customer actually pulled out of one of our mystery packs. Use the anchor product's exact card name and dollar value. Frame it as 'this came out of one of our packs' — proof that big hits are live, not just marketing. Do NOT describe it as a product for sale; it's a past pull. Drive viewers to grab a pack and chase one themselves.",
   "hobby-tip":
     "An educational or insightful tip about the Pokemon TCG hobby (grading, storage, set knowledge, vintage vs. modern, pack/box value, what makes a card a chase, common mistakes new collectors make).",
   intro:
@@ -56,6 +62,14 @@ const THEME_DESCRIPTIONS: Record<ContentTheme, string> = {
     "Research-driven market beat: lead with a SPECIFIC, current price move or value trend from the provided research nugget (real card/set names, real numbers). Frame it as proof that the chase is live and worth riding — and a mystery pack is the fun, affordable way to chase that upside. Engagement-bait: invite viewers to react ('would you pull this?', 'who's holding this set?').",
   "set-buzz":
     "Research-driven hype on a specific current/just-dropped set or chase card from the provided research nugget. What's hot right now and why collectors care. Tie it to grabbing a mystery pack to chase that exact set's hits. Ask a question that drives comments.",
+  "fun-fact":
+    "A genuinely surprising, shareable Pokemon TCG fact from the provided research nugget (real and verifiable — misprints, rarity oddities, record sales, WOTC-era lore, printing quirks, the most valuable cards). Pure scroll-stopper: lead with the wild fact, make people want to tag a friend. Tie it back lightly to the fun of the hobby / opening packs. Keep the CTA soft and product-forward but secondary to the fact.",
+  "poll-debate":
+    "Engagement bait: pose a fun this-or-that / would-you-rather / hot-take that Pokemon fans will argue about in the comments (e.g. 'Charizard or Blastoise?', 'Vintage or modern?', 'Best starter of all time?'). The whole point is to drive comments — the hook IS the question. Soft pack CTA at the end.",
+  nostalgia:
+    "Relatable throwback that hits the feels — ripping packs as a kid, chasing the holo Charizard, the smell of a fresh booster, trading at lunch. Make returning collectors feel seen and nudge them that the thrill is one pack away. Warm, not salesy; soft pack CTA.",
+  quiz:
+    "Interactive challenge that makes viewers comment their answer: 'Can you name this set from one card?', 'Guess the chase card', 'How many of these can you name?'. Frame it as a fun test of Pokemon knowledge. The hook is the challenge; soft pack CTA at the end.",
 };
 
 const SYSTEM_PROMPT = `You write short, scroll-stopping social posts for "Mystery Hits Factory" — a Pokemon TCG mystery-pack maker and website (mysteryhitsfactory.com) that sells:
@@ -189,15 +203,22 @@ function buildThemeRotation(siteContext: SiteContext | null): ContentTheme[] {
   ) {
     product.push("new-arrival");
   }
-  if (siteContext?.showcaseHits.length) product.push("hit-spotlight");
   // tier-spotlight now anchors on a real tier pack (see pickAnchorForTheme),
   // so it counts as product content.
   product.push("tier-spotlight");
 
-  // Engagement / research-driven angles — grounded in fresh web research about
-  // the live Pokemon market, then tied back to the packs. These drive comments
-  // and shares, so they ride alongside product themes rather than as filler.
-  const engagement: ContentTheme[] = ["market-watch", "set-buzz"];
+  // Engagement angles — built to drive comments, shares, and tags. Some are
+  // grounded in fresh web research (market-watch, set-buzz, fun-fact); the rest
+  // are interactive formats (polls, nostalgia, quizzes). These keep the feed
+  // varied and stop it reading as one long ad. Two land per cycle.
+  const engagement: ContentTheme[] = [
+    "fun-fact",
+    "poll-debate",
+    "market-watch",
+    "nostalgia",
+    "set-buzz",
+    "quiz",
+  ];
 
   // Evergreen, non-product angles — kept as a minority so the feed stays
   // product-led instead of drifting into generic hobby content.
@@ -209,20 +230,22 @@ function buildThemeRotation(siteContext: SiteContext | null): ContentTheme[] {
   evergreen.push("intro");
 
   // If the site gave us nothing, fall back to engagement + evergreen so we
-  // still ship — research themes don't need site data.
+  // still ship — these themes don't need site data.
   if (product.length === 0) return [...engagement, ...evergreen];
 
-  // Product-led rotation: cycle every product theme, then drop in a single
-  // engagement (research) angle and a single evergreen angle — yielding a feed
-  // that is mostly products, regularly punctuated by a timely market post, with
-  // the occasional evergreen palate cleanser. Rotate the product order each
-  // cycle so the same theme never lands two days running at a cycle boundary.
+  // Product-led but lively: each cycle runs the product themes, then TWO
+  // engagement angles (so the feed always has fresh comment-bait), then a single
+  // evergreen palate cleanser. Rotate the product order each cycle so the same
+  // theme never lands two days running at a cycle boundary.
   const rotation: ContentTheme[] = [];
   const cycles = Math.max(engagement.length, evergreen.length);
+  let e = 0;
   for (let c = 0; c < cycles; c++) {
     const offset = c % product.length;
     rotation.push(...product.slice(offset), ...product.slice(0, offset));
-    rotation.push(engagement[c % engagement.length]);
+    rotation.push(engagement[e % engagement.length]);
+    rotation.push(engagement[(e + 1) % engagement.length]);
+    e += 2;
     rotation.push(evergreen[c % evergreen.length]);
   }
   return rotation;
@@ -268,14 +291,11 @@ export function pickAnchorForTheme(
         siteContext.featuredProducts,
       ];
       break;
-    case "hit-spotlight":
-      sources = [siteContext.showcaseHits];
-      break;
     case "tier-spotlight":
     case "market-watch":
     case "set-buzz":
-      // tier-spotlight and the research themes still drive viewers to buy a
-      // pack — anchor on a real product so the post carries an actual product
+      // tier-spotlight and the market research themes still drive viewers to buy
+      // a pack — anchor on a real product so the post carries an actual product
       // image and a shoppable URL instead of an abstract background.
       sources = [
         siteContext.featuredProducts,
@@ -285,8 +305,10 @@ export function pickAnchorForTheme(
       ];
       break;
     default:
-      // giveaway-hype, seller-supply, hobby-tip, value-add, intro
-      // — these aren't anchored on a specific product
+      // giveaway-hype, seller-supply, hobby-tip, value-add, intro, and the
+      // interactive engagement themes (fun-fact, poll-debate, nostalgia, quiz)
+      // aren't tied to a specific product — they fall back to any site product
+      // image, then stock/AI, for visual variety.
       return null;
   }
 

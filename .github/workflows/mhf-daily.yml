@@ -19,11 +19,14 @@ on:
         type: choice
         options:
           - ""
+          - fun-fact
+          - poll-debate
+          - nostalgia
+          - quiz
           - market-watch
           - set-buzz
           - live-drop-urgency
           - new-arrival
-          - hit-spotlight
           - tier-spotlight
           - giveaway-hype
           - seller-supply

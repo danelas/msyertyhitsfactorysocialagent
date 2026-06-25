@@ -15,9 +15,13 @@ export type ResearchNugget = {
   angle: string;
 };
 
-const RESEARCH_SYSTEM_PROMPT = `You are a Pokemon TCG market researcher for "Mystery Hits Factory", a brand that sells mystery Pokemon packs, sealed singles, and themed bundles.
+/** What kind of real-world hook the research pass should chase. */
+export type ResearchFocus = "market" | "fun-fact";
 
-Your job: use web search to find ONE genuinely CURRENT, specific, and exciting fact about the Pokemon TCG world RIGHT NOW that would make collectors stop scrolling — then frame it so it connects to the thrill of chasing big hits (which is exactly what opening a mystery pack is).
+const BASE_PROMPT = `You are a Pokemon TCG content researcher for "Mystery Hits Factory", a brand that sells mystery Pokemon packs, sealed singles, and themed bundles. Use web search to ground your answer in something REAL and verifiable.`;
+
+const FOCUS_PROMPT: Record<ResearchFocus, string> = {
+  market: `Your job: find ONE genuinely CURRENT, specific, and exciting fact about the Pokemon TCG world RIGHT NOW that would make collectors stop scrolling — then frame it so it connects to the thrill of chasing big hits (which is exactly what opening a mystery pack is).
 
 Good angles to search for (pick whichever has the freshest, most concrete result):
 - A specific card or sealed set whose price recently jumped (with real numbers — "up X% in Y weeks", "now selling for $Z").
@@ -25,25 +29,42 @@ Good angles to search for (pick whichever has the freshest, most concrete result
 - A notable recent pull, record sale, or grading milestone (e.g. a PSA 10 that sold for a big number).
 - A market trend — what's hot, what's appreciating, what sealed product is drying up.
 
-Hard rules:
-- It MUST be real and current. Search before answering. Use actual card/set names and real figures from the results.
-- Do NOT invent prices, percentages, or sales. If you can't verify a number, describe the trend qualitatively instead.
-- Keep it collector-relevant and hype, never doom ("prices crashing" is off-brand).
+It MUST be current. Use real figures from the results — do NOT invent prices, percentages, or sales. Keep it hype, never doom ("prices crashing" is off-brand).`,
+  "fun-fact": `Your job: find ONE genuinely surprising, FUN, shareable Pokemon TCG fact that collectors would love and want to tag a friend over — then tie it lightly to the fun of the hobby / opening mystery packs.
+
+Good angles to search for (pick whichever is most surprising and verifiable):
+- Famous misprints or error cards (and what they're worth).
+- The most valuable / record-sale cards and the wild prices they hit.
+- Rarity oddities, ultra-short-print promos, or cards almost no one has.
+- WOTC-era / first-edition history and lore most fans don't know.
+- Printing quirks, secret rares, or weird set trivia.
+
+It does NOT have to be breaking news, but it MUST be true — verify it with search and use real names/numbers. Make it a scroll-stopper, not a dry encyclopedia entry.`,
+};
+
+const OUTPUT_RULES = `Hard rules:
+- It MUST be real. Search before answering and use actual card/set names and real figures from the results. If you can't verify a number, describe it qualitatively instead.
 - This is for on-screen text and captions only — no image is generated from it, so no IP/image concerns. Just don't state anything false.
 
 After researching, output ONLY valid JSON, no prose, no code fence:
 {
-  "headline": "short punchy summary of the real, current thing (8-14 words)",
-  "detail": "1-2 sentences with the specifics — real names, real numbers, recency",
-  "angle": "one sentence tying it to chasing hits / opening mystery packs"
+  "headline": "short punchy summary of the real thing (8-14 words)",
+  "detail": "1-2 sentences with the specifics — real names, real numbers",
+  "angle": "one sentence tying it to the hobby / opening mystery packs"
 }`;
+
+function buildSystemPrompt(focus: ResearchFocus): string {
+  return `${BASE_PROMPT}\n\n${FOCUS_PROMPT[focus]}\n\n${OUTPUT_RULES}`;
+}
 
 /**
  * Run a single web-research pass and return a grounded nugget, or null if the
  * research fails (so the caller can fall back to a non-research theme). Never
  * throws — the daily generator must keep shipping even if search is down.
  */
-export async function researchPokemonNugget(): Promise<ResearchNugget | null> {
+export async function researchPokemonNugget(
+  focus: ResearchFocus = "market"
+): Promise<ResearchNugget | null> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY not set");
   const client = new Anthropic({ apiKey });
@@ -52,12 +73,13 @@ export async function researchPokemonNugget(): Promise<ResearchNugget | null> {
   // their side. Cast around the older SDK's tool typings (runtime sends it raw).
   const tools = [{ type: "web_search_20260209", name: "web_search" }] as any;
 
+  const systemPrompt = buildSystemPrompt(focus);
+  const userKickoff =
+    focus === "fun-fact"
+      ? "Find one surprising, verifiable, shareable Pokemon TCG fun fact and return the JSON nugget."
+      : "Find one current, specific, exciting Pokemon TCG market move and return the JSON nugget.";
   const messages: Anthropic.MessageParam[] = [
-    {
-      role: "user",
-      content:
-        "Find one current, specific, exciting Pokemon TCG fact or market move and return the JSON nugget.",
-    },
+    { role: "user", content: userKickoff },
   ];
 
   try {
@@ -66,7 +88,7 @@ export async function researchPokemonNugget(): Promise<ResearchNugget | null> {
     let resp = await client.messages.create({
       model: "claude-sonnet-4-6",
       max_tokens: 1024,
-      system: RESEARCH_SYSTEM_PROMPT,
+      system: systemPrompt,
       messages,
       tools,
     });
@@ -77,7 +99,7 @@ export async function researchPokemonNugget(): Promise<ResearchNugget | null> {
       resp = await client.messages.create({
         model: "claude-sonnet-4-6",
         max_tokens: 1024,
-        system: RESEARCH_SYSTEM_PROMPT,
+        system: systemPrompt,
         messages,
         tools,
       });
