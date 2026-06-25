@@ -156,7 +156,11 @@ To keep the feed from reading as one long ad, **two engagement angles land every
 
 Research themes pull a fresh nugget at run time; if research fails the post still ships without the live hook. Test any with `npm run daily:dry -- --theme=fun-fact`.
 
-**Two visual formats.** Product / market posts render as a **product card** (product photo + sequenced hook → body → CTA). The interactive engagement themes (`fun-fact`, `poll-debate`, `nostalgia`, `quiz`) render as a **statement card** — a bold branded layout with a category badge ("DID YOU KNOW?", "YOU DECIDE", "QUIZ TIME", "REMEMBER THIS?"), a big headline, and a CTA on a dark gold-glow background (no product photo) — so the feed isn't visually monotonous. The variant is chosen per theme in `cardStyleForTheme` ([clipper/src/generate/index.ts](clipper/src/generate/index.ts)); both layouts live in `remotion/src/PromoCard.tsx`.
+**Three visual formats**, chosen per theme so the feed isn't visually monotonous (variant logic in `cardStyleForTheme` + the poll override in [clipper/src/generate/index.ts](clipper/src/generate/index.ts); all layouts in `remotion/src/PromoCard.tsx`):
+
+- **product** — product photo + sequenced hook → body → CTA. Used by sales / market themes.
+- **statement** — bold branded card with a category badge ("DID YOU KNOW?", "QUIZ TIME", "REMEMBER THIS?"), a big headline, and a CTA on a dark gold-glow background (no product photo). Used by `fun-fact`, `quiz`, `nostalgia`.
+- **versus** — split this-or-that poll card: red optionA over blue optionB, gold "VS" badge, "COMMENT YOUR PICK" CTA. Used by `poll-debate` when the plan returns two options (the model fills `optionA`/`optionB`); falls back to the statement card otherwise.
 
 > The old `hit-spotlight` ("someone pulled this from our pack") theme has been removed.
 

@@ -17,10 +17,14 @@ export const promoCardSchema = z.object({
   cta: z.string(),
   brandColor: zColor(),
   /** "product" = product photo + sequenced hook/body/cta (sales posts).
-   *  "statement" = bold branded fact/poll/quiz card (engagement posts). */
-  variant: z.enum(["product", "statement"]).default("product"),
+   *  "statement" = bold branded fact/quiz card (engagement posts).
+   *  "versus" = split this-or-that poll card. */
+  variant: z.enum(["product", "statement", "versus"]).default("product"),
   /** Category badge shown on statement cards, e.g. "DID YOU KNOW?". */
   label: z.string().default(""),
+  /** The two choices for a "versus" poll card. Empty otherwise. */
+  optionA: z.string().default(""),
+  optionB: z.string().default(""),
 });
 
 export type PromoCardProps = z.infer<typeof promoCardSchema>;
@@ -29,6 +33,9 @@ const HOOK_END = 3;
 const BODY_END = 8;
 
 export const PromoCard: React.FC<PromoCardProps> = (props) => {
+  if (props.variant === "versus") {
+    return <VersusCard {...props} />;
+  }
   if (props.variant === "statement") {
     return <StatementCard {...props} />;
   }
@@ -304,6 +311,154 @@ const StatementCard: React.FC<PromoCardProps> = ({
           }}
         >
           {cta}
+        </div>
+      </AbsoluteFill>
+    </AbsoluteFill>
+  );
+};
+
+const OptionText: React.FC<{ text: string }> = ({ text }) => (
+  <div
+    style={{
+      color: "#fff",
+      fontSize: 96,
+      fontWeight: 900,
+      fontFamily: '"Arial Black", Impact, sans-serif',
+      textAlign: "center",
+      textTransform: "uppercase",
+      lineHeight: 1.02,
+      maxWidth: 860,
+      textShadow: "0 4px 22px rgba(0,0,0,0.55)",
+    }}
+  >
+    {text}
+  </div>
+);
+
+/**
+ * Poll layout — a split this-or-that card. Top half (red) is optionA, bottom
+ * half (blue) is optionB, with a gold "VS" badge on the seam, the question
+ * pinned at the top, and an engagement CTA at the bottom. Pure comment-bait.
+ */
+const VersusCard: React.FC<PromoCardProps> = ({
+  hook,
+  cta,
+  brandColor,
+  optionA,
+  optionB,
+}) => {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const enter = interpolate(frame, [0, Math.round(0.4 * fps)], [0, 1], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+  });
+  const pop = interpolate(
+    frame,
+    [Math.round(0.3 * fps), Math.round(0.7 * fps)],
+    [0, 1],
+    { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
+  );
+
+  return (
+    <AbsoluteFill style={{ backgroundColor: "#000" }}>
+      {/* Two color halves. */}
+      <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column" }}>
+        <div
+          style={{
+            flex: 1,
+            background: "linear-gradient(135deg, #d6372a, #7c160d)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "300px 70px 150px",
+          }}
+        >
+          <OptionText text={optionA} />
+        </div>
+        <div
+          style={{
+            flex: 1,
+            background: "linear-gradient(135deg, #2f6fe6, #112c73)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "150px 70px 300px",
+          }}
+        >
+          <OptionText text={optionB} />
+        </div>
+      </div>
+
+      {/* The question, pinned at the top. */}
+      <AbsoluteFill
+        style={{ justifyContent: "flex-start", alignItems: "center", padding: "110px 60px 0", opacity: enter }}
+      >
+        <div
+          style={{
+            color: "#fff",
+            fontSize: 62,
+            fontWeight: 900,
+            fontFamily: '"Arial Black", Impact, sans-serif',
+            textAlign: "center",
+            textTransform: "uppercase",
+            lineHeight: 1.08,
+            maxWidth: 960,
+            background: "rgba(0,0,0,0.45)",
+            padding: "22px 40px",
+            borderRadius: 24,
+            textShadow: "0 4px 18px rgba(0,0,0,0.85)",
+          }}
+        >
+          {hook}
+        </div>
+      </AbsoluteFill>
+
+      {/* Gold VS badge on the seam. */}
+      <AbsoluteFill style={{ justifyContent: "center", alignItems: "center" }}>
+        <div
+          style={{
+            transform: `scale(${0.6 + 0.4 * pop})`,
+            width: 210,
+            height: 210,
+            borderRadius: "50%",
+            backgroundColor: brandColor,
+            color: "#000",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 100,
+            fontWeight: 900,
+            fontFamily: '"Arial Black", Impact, sans-serif',
+            border: "10px solid #000",
+            boxShadow: "0 0 0 8px rgba(255,255,255,0.18), 0 16px 40px rgba(0,0,0,0.6)",
+          }}
+        >
+          VS
+        </div>
+      </AbsoluteFill>
+
+      {/* Engagement CTA at the bottom. */}
+      <AbsoluteFill
+        style={{ justifyContent: "flex-end", alignItems: "center", padding: "0 60px 150px", opacity: pop }}
+      >
+        <div
+          style={{
+            backgroundColor: "#000",
+            color: "#fff",
+            border: `5px solid ${brandColor}`,
+            fontSize: 54,
+            fontWeight: 900,
+            fontFamily: '"Arial Black", Impact, sans-serif',
+            textTransform: "uppercase",
+            letterSpacing: 2,
+            padding: "22px 46px",
+            borderRadius: 18,
+            textAlign: "center",
+            maxWidth: 920,
+          }}
+        >
+          {cta || "COMMENT YOUR PICK"}
         </div>
       </AbsoluteFill>
     </AbsoluteFill>

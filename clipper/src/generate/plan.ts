@@ -39,6 +39,9 @@ export type ContentPlan = {
   caption: string;
   /** Specific URL to drop into the caption when the post is anchored on a product. */
   url?: string;
+  /** For this-or-that poll posts (poll-debate): the two choices. Empty otherwise. */
+  optionA?: string;
+  optionB?: string;
 };
 
 const THEME_DESCRIPTIONS: Record<ContentTheme, string> = {
@@ -65,7 +68,7 @@ const THEME_DESCRIPTIONS: Record<ContentTheme, string> = {
   "fun-fact":
     "A genuinely surprising, shareable Pokemon TCG fact from the provided research nugget (real and verifiable — misprints, rarity oddities, record sales, WOTC-era lore, printing quirks, the most valuable cards). Pure scroll-stopper: lead with the wild fact, make people want to tag a friend. Tie it back lightly to the fun of the hobby / opening packs. Keep the CTA soft and product-forward but secondary to the fact.",
   "poll-debate":
-    "Engagement bait: pose a fun this-or-that / would-you-rather / hot-take that Pokemon fans will argue about in the comments (e.g. 'Charizard or Blastoise?', 'Vintage or modern?', 'Best starter of all time?'). The whole point is to drive comments — the hook IS the question. Soft pack CTA at the end.",
+    "Engagement bait: a fun this-or-that that Pokemon fans will argue about in the comments (e.g. 'Charizard or Blastoise?', 'Vintage or modern?', 'WOTC or modern alt arts?'). The hook IS the question (short, ALL-CAPS). Fill optionA and optionB with the two competing choices (1-3 words each, e.g. 'CHARIZARD' / 'BLASTOISE'). The cta is an engagement prompt like 'COMMENT YOUR PICK' or 'DROP YOUR ANSWER' — NOT a product CTA. Keep the body to one short line of context or leave it light.",
   nostalgia:
     "Relatable throwback that hits the feels — ripping packs as a kid, chasing the holo Charizard, the smell of a fresh booster, trading at lunch. Make returning collectors feel seen and nudge them that the thrill is one pack away. Warm, not salesy; soft pack CTA.",
   quiz:
@@ -105,14 +108,17 @@ CTA + caption rules — these posts exist to drive sales, so make the ask produc
 - When an anchor product is provided, the caption must reference THAT product by name and push the viewer to shop it (the specific product URL is appended automatically — write the caption so the link is the obvious next step, e.g. "Grab the Vault Drop before it's gone 👇").
 - When there's no anchor product, still close on a clear shop-the-packs CTA pointing to mysteryhitsfactory.com.
 - Keep it natural, not spammy — one strong CTA, not three.
+- EXCEPTION — poll-debate posts: the cta is an engagement prompt ("COMMENT YOUR PICK", "DROP YOUR ANSWER"), not a product CTA. Drive the comment, not the sale.
 
 Output ONLY valid JSON, no prose, no code fence:
 {
   "hook": "3-6 word ALL-CAPS on-screen hook (super punchy, no period)",
   "body": "1 sentence (12-25 words) — the actual point",
-  "cta": "3-6 word ALL-CAPS product-forward call-to-action (see CTA rules)",
+  "cta": "3-6 word ALL-CAPS call-to-action (product-forward per CTA rules; engagement prompt for poll-debate)",
   "imagePrompt": "Background prompt following the IP rules above.",
-  "caption": "1-2 sentence social caption that lands on a product CTA. No hashtags, no @-handles, no raw URL — those are added per platform."
+  "caption": "1-2 sentence social caption that lands on a product CTA. No hashtags, no @-handles, no raw URL — those are added per platform.",
+  "optionA": "poll-debate ONLY: first choice, 1-3 words ALL-CAPS. Empty string for every other theme.",
+  "optionB": "poll-debate ONLY: second choice, 1-3 words ALL-CAPS. Empty string for every other theme."
 }
 
 When site context is provided, use the SPECIFIC product/drop name in the hook and body. Use real prices, real tier names, real urgency signals. Don't invent details.

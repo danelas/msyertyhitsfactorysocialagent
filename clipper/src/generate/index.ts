@@ -37,13 +37,15 @@ function firstProductWithImage(siteContext: SiteContext | null): SiteProduct | n
  * product-photo card, so the feed has visually distinct formats.
  */
 function cardStyleForTheme(theme: ContentTheme): {
-  variant: "product" | "statement";
+  variant: "product" | "statement" | "versus";
   label: string;
 } {
   switch (theme) {
     case "fun-fact":
       return { variant: "statement", label: "DID YOU KNOW?" };
     case "poll-debate":
+      // Upgraded to the split "versus" card when the plan yields two options
+      // (see below); falls back to this statement card otherwise.
       return { variant: "statement", label: "YOU DECIDE" };
     case "quiz":
       return { variant: "statement", label: "QUIZ TIME" };
@@ -160,7 +162,14 @@ export async function generatePromoVideo(
     imageSource = "ai";
   }
 
-  const { variant, label } = cardStyleForTheme(theme);
+  let { variant, label } = cardStyleForTheme(theme);
+  const optionA = (plan.optionA ?? "").trim();
+  const optionB = (plan.optionB ?? "").trim();
+  // poll-debate gets the split "VS" card when both choices came back; otherwise
+  // it stays on the statement card so we never render a half-empty versus.
+  if (theme === "poll-debate" && optionA && optionB) {
+    variant = "versus";
+  }
   const props = {
     backgroundImage: imageStagedName,
     hook: plan.hook,
@@ -169,6 +178,8 @@ export async function generatePromoVideo(
     brandColor,
     variant,
     label,
+    optionA,
+    optionB,
   };
   console.log(`[generate] card variant: ${variant}${label ? ` (${label})` : ""}`);
   const propsPath = resolve(workDir, "props.json");
